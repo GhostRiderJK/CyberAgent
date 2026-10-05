@@ -1,0 +1,36 @@
+[project]
+name = "cyberagent"
+version = "0.1.0"
+description = "CyberAgent: Agent-Assisted Network Threat Detection and Investigation using Machine Learning"
+authors = [{name = "Your Name"}]
+dependencies = [
+    "pandas",
+    "numpy",
+    "pyarrow",
+    "scikit-learn",
+    "imbalanced-learn",
+    "lightgbm",
+    "xgboost",
+    "optuna",
+    "shap",
+    "mlflow",
+    "matplotlib",
+    "seaborn",
+    "joblib",
+    "pyyaml",
+    "pydantic",
+    "fastapi",
+    "uvicorn",
+    "sse-starlette",
+    "anthropic",
+    "httpx",
+    "pytest",
+    "ruff",
+]
+
+[project.optional-dependencies]
+dev = []
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
