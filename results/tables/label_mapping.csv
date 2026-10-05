@@ -1,4 +1,4 @@
-Label,Count
-BENIGN,1
-DoS Hulk,1
-PortScan,1
+Original_Label,Mapped_Label
+BENIGN,BENIGN
+DoS Hulk,DoS
+PortScan,PortScan
