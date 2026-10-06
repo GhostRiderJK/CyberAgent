@@ -52,11 +52,25 @@ Reduce the dataset to a manageable size while preserving rare classes:
 make reduce
 ```
 
+### Preprocessing
+
+Preprocess the reduced data (this step is typically included in the training pipeline):
+```bash
+make preprocess
+```
+
 ### Training
 
 Train the models:
 ```bash
 make train
+```
+
+### Hyperparameter Tuning (Optional)
+
+Run Optuna-based hyperparameter tuning:
+```bash
+make tune
 ```
 
 ### Evaluation
@@ -102,13 +116,41 @@ Results are saved in the `results/` directory, including:
 - `figures/`: Plots and charts.
 - `agent_logs/`: JSONL logs of agent tool calls.
 
-## Limitations
+## Makefile Targets
 
+- `setup`: Install dependencies (backend and frontend)
+- `reduce`: Run dataset reduction
+- `preprocess`: Run preprocessing
+- `train`: Train models
+- `tune`: Run hyperparameter tuning
+- `evaluate`: Evaluate models
+- `agent-eval`: Evaluate agent
+- `api`: Start the API server
+- `frontend`: Start the frontend development server
+- `dev`: Start both API and frontend
+- `test`: Run tests
+- `lint`: Run linter
+- `all`: Run setup, reduce, preprocess, train, evaluate, agent-eval, api, frontend (for development)
+
+## Assumptions and Limitations
+
+### Assumptions
+- Dataset is available in the specified format under `data/raw/`.
+- Timestamps without AM/PM markers follow the 8:00-17:00 working hours pattern (we infer PM for hours 1-7).
+- Benign class can be safely downsampled for training without affecting detection of rare attacks.
+- MITRE ATT&CK mappings are available for attack classes present in the dataset.
+- LLM backend (Anthropic/Ollama/mock) is accessible as configured.
+
+### Limitations
 - The dataset used is the original CIC-IDS2017, which has known labeling and flow-construction issues.
 - Timestamps in the dataset lack AM/PM markers; we infer PM for hours 1-7.
 - The benign class is downsampled, so benign FPR and precision do not reflect real-world traffic.
 - The LLM agent may produce ungrounded claims; a grounding verifier is included to mitigate this.
 - This project uses synthetic data for testing and a mock LLM backend; real API keys are required for full functionality.
+- The model training and tuning steps can be computationally intensive.
+- The explanation module (SHAP) is currently a placeholder and may not be fully integrated.
+- The anomaly detection module (Isolation Forest) is trained on benign-only data and may not capture all types of anomalies.
+- The evaluation metrics are computed on a test set that may not be fully representative of real-world traffic.
 
 ## License
 
