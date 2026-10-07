@@ -8,6 +8,9 @@ import subprocess
 import os
 from pathlib import Path
 
+# Ensure the project root is in the Python path so that `src` can be imported
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 def run_command(cmd, cwd=None):
     """Run a command and stream output."""
     print(f"Running: {cmd}")
@@ -213,6 +216,7 @@ if __name__ == "__main__":
     elif task == "test":
         task_test()
     elif task == "lint":
+        task_lint()
     elif task == "fix-labels":
         task_fix_labels()
         task_lint()
