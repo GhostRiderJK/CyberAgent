@@ -546,12 +546,22 @@ def example_preprocessing_pipeline() -> Dict[str, Any]:
     # We will remove them when we split.
 
     # Holdout split: remove zero-day holdout labels from supervised set
+    from src.cyberagent.config import config
     zero_day_holdout_labels = config.get("preprocessing.zero_day_holdout_labels", [])
     supervised_mask = ~features_clean['Label'].isin(zero_day_holdout_labels)
     holdout_mask = features_clean['Label'].isin(zero_day_holdout_labels)
 
     supervised_features = features_clean[supervised_mask].copy()
     holdout_features = features_clean[holdout_mask].copy()
+
+    # Save holdout data to disk
+    processed_dir = config.get("dataset.processed_dir")
+    holdout_features_path = f"{processed_dir}/holdout_zero_day.parquet"
+    holdout_metadata_path = f"{processed_dir}/holdout_zero_day_meta.parquet"
+
+    # Ensure directory exists
+    from pathlib import Path
+    Path(holdout_features_path).parent.mkdir(parents=True, exist_ok=True)
 
     # Print holdout label distribution
     if len(holdout_features) > 0:
@@ -582,6 +592,10 @@ def example_preprocessing_pipeline() -> Dict[str, Any]:
     supervised_metadata = supervised_metadata.reset_index(drop=True)
     holdout_features = holdout_features.reset_index(drop=True)
     holdout_metadata = holdout_metadata.reset_index(drop=True)
+
+    # Save holdout data to disk (after resetting index)
+    holdout_features.to_parquet(holdout_features_path, compression='zstd')
+    holdout_metadata.to_parquet(holdout_metadata_path, compression='zstd')
 
     # Split supervised data
     (X_train, X_val, X_test,
