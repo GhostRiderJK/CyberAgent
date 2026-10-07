@@ -161,8 +161,8 @@ def test_clean_data_duplicate_columns():
 
     print("clean_data duplicate columns test passed!")
 
-def test_apply_label_grouping():
-    """Test label grouping function."""
+def test_apply_label_grouping_identity():
+    """Test label grouping function with empty mapping (identity)."""
     # Create test data with labels - using the same column name format as data_loader
     features_df = pd.DataFrame({
         'feature1': [1.0, 2.0, 3.0, 4.0],
@@ -173,12 +173,12 @@ def test_apply_label_grouping():
         'Label': ['BENIGN', 'DoS Hulk', 'DoS Hulk', 'PortScan']
     })
 
-    # Test identity mapping (no grouping)
+    # Test identity mapping (empty mapping)
     features_out, metadata_out, mapping = apply_label_grouping(
-        features_df, metadata_df, label_mapping_config=None
+        features_df, metadata_df, label_mapping_config={}
     )
 
-    # Check that mapping is identity
+    # Check that mapping is identity for the labels present
     expected_mapping = {
         'BENIGN': 'BENIGN',
         'DoS Hulk': 'DoS Hulk',
@@ -190,20 +190,44 @@ def test_apply_label_grouping():
     assert 'Label' in features_out.columns
     assert list(features_out['Label']) == ['BENIGN', 'DoS Hulk', 'DoS Hulk', 'PortScan']
 
-    # Test custom grouping
+
+def test_apply_label_grouping_webattack():
+    """Test label grouping function with Web Attack merging."""
+    # Create test data with Web Attack labels (with possible corrupted dash)
+    features_df = pd.DataFrame({
+        'feature1': [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+        'flow_id': [0, 1, 2, 3, 4, 5]
+    })
+    metadata_df = pd.DataFrame({
+        'flow_id': [0, 1, 2, 3, 4, 5],
+        'Label': ['Web Attack \x96 Brute Force', 'Web Attack \x96 XSS', 'Web Attack \x96 Sql Injection', 'BENIGN', 'DoS Hulk', 'PortScan']
+    })
+
+    # Test explicit Web Attack mapping
     custom_mapping = {
-        'BENIGN': 'BENIGN',
-        'DoS Hulk': 'DoS',
-        'PortScan': 'PortScan'
+        'Web Attack - Brute Force': 'Web Attack',
+        'Web Attack - XSS': 'Web Attack',
+        'Web Attack - Sql Injection': 'Web Attack'
     }
-    features_out2, metadata_out2, mapping2 = apply_label_grouping(
+    features_out, metadata_out, mapping = apply_label_grouping(
         features_df, metadata_df, label_mapping_config=custom_mapping
     )
 
-    assert mapping2 == custom_mapping
-    assert list(features_out2['Label']) == ['BENIGN', 'DoS', 'DoS', 'PortScan']
+    # The mapping should only include labels present in the data after normalization.
+    # Since we pass explicit mapping, we expect it to be returned as-is.
+    # However, note that the function first normalizes labels, then applies mapping.
+    # The normalization will convert the corrupted dash labels to 'Web Attack - ...'
+    # So the keys in the mapping should match the normalized labels.
+    # We expect the mapping to be exactly what we passed.
+    assert mapping == custom_mapping
+
+    # Check that Label column in features is all 'Web Attack' for the first three, and others unchanged.
+    expected_labels = ['Web Attack', 'Web Attack', 'Web Attack', 'BENIGN', 'DoS Hulk', 'PortScan']
+    assert list(features_out['Label']) == expected_labels
 
     print("apply_label_grouping tests passed!")
+
+
 
 def test_split_data():
     """Test data splitting function."""
@@ -245,6 +269,7 @@ def test_split_data():
 
     print("split_data tests passed!")
 
+
 def test_preprocess_train_fit():
     """Test preprocessing fitting function."""
     # Create test training data
@@ -281,6 +306,7 @@ def test_preprocess_train_fit():
 
     print("preprocess_train_fit tests passed!")
 
+
 def test_preprocess_transform():
     """Test preprocessing transform function."""
     # Create test data
@@ -312,6 +338,7 @@ def test_preprocess_transform():
 
     print("preprocess_transform tests passed!")
 
+
 def test_handle_imbalance():
     """Test imbalance handling function."""
     # Create test labels
@@ -329,12 +356,14 @@ def test_handle_imbalance():
 
     print("handle_imbalance tests passed!")
 
+
 if __name__ == "__main__":
     test_clean_data()
     test_clean_data_impossible_negatives()
     test_clean_data_no_negative_handling()
     test_clean_data_duplicate_columns()
-    test_apply_label_grouping()
+    test_apply_label_grouping_identity()
+    test_apply_label_grouping_webattack()
     test_split_data()
     test_preprocess_train_fit()
     test_preprocess_transform()

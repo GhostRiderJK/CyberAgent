@@ -7,16 +7,16 @@ seed: 42
 dataset:
   raw_dir: data/raw
   processed_dir: data/processed
-  primary_folder: TrafficLabelling
+  primary_folder: GeneratedLabelledFlows/TrafficLabelling
   secondary_folder: MachineLearningCVE
   file_extension: ".pcap_ISCX.csv"
-  
+
 # Dataset reduction settings
 reduction:
-  benign_cap: 300000
-  attack_cap: 50000
+  benign_cap: 200000  # Full dataset cap for benign
+  attack_cap: 50000   # Full dataset cap for attack
   seed: 42
-  
+
 # Data splitting
 split:
   mode: "stratified"  # Options: "stratified", "time_aware"
@@ -24,7 +24,7 @@ split:
   val_ratio: 0.15
   test_ratio: 0.15
   seed: 42
-  
+
 # Preprocessing
 preprocessing:
   handle_impossible_negatives: true
@@ -32,11 +32,20 @@ preprocessing:
   correlation_threshold: 0.95
   feature_selection_method: "mutual_info"  # Options: "mutual_info", "tree_importance"
   top_k_features: 50
-  
+  # Label grouping for rare classes
+  label_groups:
+    "Web Attack - Brute Force": "Web Attack"
+    "Web Attack - XSS": "Web Attack"
+    "Web Attack - Sql Injection": "Web Attack"
+  # Zero-day holdout labels (excluded from train/val/test splits)
+  zero_day_holdout_labels:
+    - "Heartbleed"
+    - "Infiltration"
+
 # Imbalance handling
 imbalance:
   method: "class_weight"  # Options: "class_weight", "smote"
-  
+
 # Model training
 training:
   models:
@@ -46,19 +55,19 @@ training:
     - "lightgbm"
     - "mlp"
   validation_metric: "macro_f1"
-  
+
 # Optuna tuning
 tuning:
   enabled: false
   n_trials: 50
   cv_folds: 3
   timeout: 3600  # seconds
-  
+
 # Evaluation thresholds
 evaluation:
   macro_f1_threshold: 0.8
   benign_fpr_threshold: 0.05
-  
+
 # Agent configuration
 agent:
   max_tool_calls: 6
@@ -66,18 +75,18 @@ agent:
   anomaly_threshold: 0.5
   llm_backend: "mock"  # Options: "anthropic", "ollama", "mock"
   temperature: 0.0
-  
+
 # API configuration
 api:
   host: "0.0.0.0"
   port: 8000
   cors_origins:
     - "http://localhost:5173"
-    
+
 # Frontend configuration
 frontend:
   port: 5173
-  
+
 # Logging
 logging:
   level: "INFO"
