@@ -13,34 +13,25 @@ def get_file_hash(filepath):
     return sha256_hash.hexdigest()
 
 
-def get_file_info(filepath):
-    """Get modification time and size of a file."""
-    stat = os.stat(filepath)
-    return {
-        'mtime': stat.st_mtime,
-        'size': stat.st_size
-    }
-
-
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True, scope="session")
 def check_artifact_integrity():
     """Fixture to ensure no files in data/processed or results/tables are modified during test session."""
     # Directories to monitor
     monitor_dirs = [
-        Path("data/processed").resolve(),
-        Path("results/tables").resolve()
+        Path("data/processed"),
+        Path("results/tables")
     ]
 
     # Store initial state
     initial_state = {}
 
-    # Record initial hashes/file info for all files in monitored directories
+    # Record initial hashes for all files in monitored directories
     for monitor_dir in monitor_dirs:
         if monitor_dir.exists():
             for file_path in monitor_dir.rglob("*"):
                 if file_path.is_file():
                     # Use the file path as key
-                    initial_state[str(file_path)] = get_file_info(file_path)
+                    initial_state[str(file_path)] = get_file_hash(file_path)
 
     yield  # Run the tests
 
@@ -50,11 +41,11 @@ def check_artifact_integrity():
     deleted_files = []
 
     # Check for modified or deleted files
-    for file_path_str, initial_info in initial_state.items():
+    for file_path_str, initial_hash in initial_state.items():
         file_path = Path(file_path_str)
         if file_path.exists():
-            current_info = get_file_info(file_path)
-            if current_info != initial_info:
+            current_hash = get_file_hash(file_path)
+            if current_hash != initial_hash:
                 changed_files.append(file_path_str)
         else:
             deleted_files.append(file_path_str)

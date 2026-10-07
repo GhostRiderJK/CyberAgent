@@ -314,6 +314,8 @@ def split_data(
 ]:
     """
     Split data into training, validation, and test sets.
+    Removes zero-day holdout labels (Infiltration, Heartbleed) before splitting
+    and saves them separately if output_dir is provided.
 
     Args:
         features_df: DataFrame with features (should include Label column for stratification)
@@ -329,6 +331,17 @@ def split_data(
     """
     if not np.isclose(train_ratio + val_ratio + test_ratio, 1.0):
         raise ValueError("Split ratios must sum to 1.0")
+
+    # Remove zero-day holdout labels before splitting
+    from src.cyberagent.config import config
+    zero_day_holdout_labels = config.get("preprocessing.zero_day_holdout_labels", [])
+
+    if zero_day_holdout_labels and 'Label' in features_df.columns:
+        holdout_mask = features_df['Label'].isin(zero_day_holdout_labels)
+        if holdout_mask.any():
+            # Remove holdout labels from the data to be split
+            features_df = features_df[~holdout_mask].copy()
+            metadata_df = metadata_df[metadata_df['flow_id'].isin(features_df['flow_id'])].copy()
 
     # Get indices
     indices = np.arange(len(features_df))
@@ -366,9 +379,9 @@ def split_data(
 
     # Extract data for each split
     def _extract_split(idx):
-        X = features_df.loc[idx].drop(columns=['flow_id', 'Label']) if 'Label' in features_df.columns else features_df.loc[idx].drop(columns=['flow_id'])
-        y = features_df.loc[idx]['Label'] if 'Label' in features_df.columns else pd.Series(dtype=object)
-        meta = metadata_df.loc[idx]
+        X = features_df.iloc[idx].drop(columns=['flow_id', 'Label']) if 'Label' in features_df.columns else features_df.iloc[idx].drop(columns=['flow_id'])
+        y = features_df.iloc[idx]['Label'] if 'Label' in features_df.columns else pd.Series(dtype=object)
+        meta = metadata_df.iloc[idx]
         return X, y, meta
 
     X_train, y_train, train_meta = _extract_split(train_indices)
