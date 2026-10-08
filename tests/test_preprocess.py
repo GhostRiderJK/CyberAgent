@@ -284,13 +284,17 @@ def test_preprocess_train_fit():
 
     # Remove flow_id as it's not a real feature for preprocessing
     X_train = X_train.drop(columns=['flow_id'])
+    # Create dummy y_train for testing
+    y_train = pd.Series([0, 1, 0, 1, 0])
 
     # Test fitting
     imputer, scaler, feature_mask = preprocess_train_fit(
         X_train,
+        y_train,
         correlation_threshold=0.95,
         feature_selection_method="variance",
-        top_k_features=2
+        top_k_features=2,
+        seed=42
     )
 
     # Check that we got the expected objects
@@ -495,9 +499,11 @@ def test_clean_data_end_to_end_fit_transform():
     # Test fitting
     imputer, scaler, feature_mask = preprocess_train_fit(
         X_train,
+        pd.Series([0, 0, 0, 0, 0]),  # dummy y_train
         correlation_threshold=0.95,
         feature_selection_method="variance",
-        top_k_features=2
+        top_k_features=2,
+        seed=42
     )
 
     # Test transforming training data
