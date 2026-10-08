@@ -29,9 +29,9 @@ split:
 preprocessing:
   handle_impossible_negatives: true
   drop_constant_columns: true
-  correlation_threshold: 1.0  # Disable correlation pruning by setting threshold high
-  feature_selection_method: "mutual_info"  # Options: "mutual_info", "tree_importance"
-  top_k_features: 70  # We expect 70 features after removing flow_id and Label from 72
+  correlation_threshold: 0.95  # Disable correlation pruning by setting threshold high
+  feature_selection_method: "mutual_info"  # Options: "mutual_info", "tree_importance" or "none" for correlation pruning only
+  top_k_features: 40 
   # Label grouping for rare classes
   label_groups:
     "Web Attack - Brute Force": "Web Attack"

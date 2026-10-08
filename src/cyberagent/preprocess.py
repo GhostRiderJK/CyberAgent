@@ -1,19 +1,67 @@
 """
 Preprocessing module for CyberAgent.
-Handles loading, cleaning, splitting, and basic preprocessing of the dataset.
+
+Loading, cleaning, label grouping, splitting and leakage-safe preprocessing.
+
+Key rules:
+  * Everything that learns from data (imputer, scaler, feature selector) is fit
+    on the TRAINING split only.
+  * Features and metadata are always linked by ``flow_id``, never by row order.
+  * ``X_*`` / ``y_*`` returned by ``split_data`` are indexed by ``flow_id``.
 """
-import pandas as pd
-import numpy as np
-import os
 import re
 from pathlib import Path
-from typing import Tuple, Optional, Dict, Any
+from typing import Any, Dict, Optional, Tuple
+
+import numpy as np
+import pandas as pd
+from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.impute import SimpleImputer
-from sklearn.feature_selection import VarianceThreshold, mutual_info_classif
+
 from src.cyberagent.config import config
+from src.cyberagent.feature_selection import FeatureSelector
 from src.cyberagent.logging_setup import logger
+
+MIN_CLASS_ROWS = 50            # warn when a class has fewer rows than this in a split
+CROSS_LABEL_LIMIT_PCT = 0.5    # above this, cross-label duplicates need a manual decision
+
+# Features that cannot be negative (a negative value is a CICFlowMeter artefact).
+IMPOSSIBLE_NEGATIVE_FEATURES = [
+    'Flow Duration', 'Total Fwd Packets', 'Total Backward Packets',
+    'Total Length of Fwd Packets', 'Total Length of Bwd Packets',
+    'Fwd Packet Length Max', 'Fwd Packet Length Min', 'Fwd Packet Length Mean',
+    'Fwd Packet Length Std', 'Bwd Packet Length Max', 'Bwd Packet Length Min',
+    'Bwd Packet Length Mean', 'Bwd Packet Length Std', 'Flow Bytes/s',
+    'Flow Packets/s', 'Flow IAT Mean', 'Flow IAT Std', 'Flow IAT Max',
+    'Flow IAT Min', 'Fwd IAT Total', 'Fwd IAT Mean', 'Fwd IAT Std',
+    'Fwd IAT Max', 'Fwd IAT Min', 'Bwd IAT Total', 'Bwd IAT Mean',
+    'Bwd IAT Std', 'Bwd IAT Max', 'Bwd IAT Min', 'Fwd PSH Flags',
+    'Bwd PSH Flags', 'Fwd URG Flags', 'Bwd URG Flags', 'Fwd Header Length',
+    'Bwd Header Length', 'Fwd Packets/s', 'Bwd Packets/s',
+    'Min Packet Length', 'Max Packet Length', 'Packet Length Mean',
+    'Packet Length Std', 'Packet Length Variance', 'FIN Flag Count',
+    'SYN Flag Count', 'RST Flag Count', 'PSH Flag Count',
+    'ACK Flag Count', 'URG Flag Count', 'CWE Flag Count',
+    'ECE Flag Count', 'Down/Up Ratio', 'Average Packet Size',
+    'Avg Fwd Segment Size', 'Avg Bwd Segment Size',
+]
+
+# Dash look-alikes seen in CIC-IDS2017 labels: the cp1252 dash (\x96/\x97 when read
+# as latin-1), the Unicode replacement character, and the Unicode dash block.
+_DASH_RE = re.compile("[\u2010-\u2015\u2212\ufe58\ufe63\uff0d\ufffd\x96\x97]")
+_CONTROL_RE = re.compile("[\x00-\x1f\x7f-\x9f]")
+
+
+def normalize_label(value: Any) -> str:
+    """Return a clean label: odd dashes -> '-', control chars removed, spaces collapsed.
+
+    Idempotent: normalize_label(normalize_label(x)) == normalize_label(x).
+    """
+    text = _DASH_RE.sub("-", str(value))
+    text = _CONTROL_RE.sub(" ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
 
 def load_reduced_data(
     features_path: Optional[str] = None,
@@ -48,7 +96,6 @@ def load_reduced_data(
     logger.info(f"Loading metadata from {metadata_path}")
     metadata_df = pd.read_parquet(metadata_path)
 
-    # Ensure flow_id is present in both
     if 'flow_id' not in features_df.columns:
         raise ValueError("flow_id column missing in features_df")
     if 'flow_id' not in metadata_df.columns:
@@ -56,177 +103,165 @@ def load_reduced_data(
 
     return features_df, metadata_df
 
+
+def _count_groups(frame: pd.DataFrame, cols: list) -> int:
+    """Number of distinct feature-value groups in ``frame`` (NaN counts as a value)."""
+    if frame.empty:
+        return 0
+    return int(frame.groupby(cols, dropna=False, sort=False).ngroups)
+
+
+def _remove_duplicates(df: pd.DataFrame, cols: list, st: Dict[str, Any]) -> pd.DataFrame:
+    """Remove duplicate feature rows. NaN-safe: NaN is treated as an ordinary value.
+
+    Rule: rows whose features are identical but whose labels differ (the true label is
+    unknowable) are ALL dropped when they are < CROSS_LABEL_LIMIT_PCT of the data.
+    For identical rows with the same label, exactly one is kept.
+    """
+    st.update(
+        duplicate_rows=0, cross_label_groups=0, cross_label_rows=0, cross_label_pct=0.0,
+        same_label_groups=0, same_label_rows=0, dropped_cross_label=0, dropped_same_label=0,
+    )
+    if not cols:
+        logger.warning("No feature columns available for duplicate checking.")
+        return df
+
+    dup_all = df.duplicated(subset=cols, keep=False).to_numpy()
+    n_dup = int(dup_all.sum())
+    st["duplicate_rows"] = n_dup
+    if n_dup == 0:
+        logger.info("No duplicate feature rows found.")
+        return df
+    logger.warning(f"Found {n_dup} duplicate feature rows.")
+
+    if 'Label' not in df.columns:
+        logger.warning("Label column not found, using standard duplicate removal.")
+        drop = df.duplicated(subset=cols, keep='first').to_numpy()
+        st["dropped_same_label"] = int(drop.sum())
+        return df[~drop].reset_index(drop=True)
+
+    dup_pos = np.flatnonzero(dup_all)
+    dups = df.iloc[dup_pos]
+    n_labels = (
+        dups.groupby(cols, dropna=False, sort=False)['Label'].transform('nunique').to_numpy()
+    )
+    is_cross = n_labels > 1
+    cross_pos, same_pos = dup_pos[is_cross], dup_pos[~is_cross]
+
+    pct = 100.0 * len(cross_pos) / len(df)
+    st.update(
+        cross_label_rows=int(len(cross_pos)), same_label_rows=int(len(same_pos)),
+        cross_label_groups=_count_groups(dups[is_cross], cols),
+        same_label_groups=_count_groups(dups[~is_cross], cols),
+        cross_label_pct=pct,
+    )
+    logger.info(
+        f"Duplicate analysis: {st['cross_label_groups']} cross-label groups "
+        f"({st['cross_label_rows']} rows, {pct:.4f}%), "
+        f"{st['same_label_groups']} same-label groups ({st['same_label_rows']} rows)"
+    )
+
+    if pct >= CROSS_LABEL_LIMIT_PCT:
+        logger.warning(
+            f"Cross-label duplicate rows ({pct:.4f}%) >= {CROSS_LABEL_LIMIT_PCT}%. "
+            "No changes made to duplicate handling. Manual review required."
+        )
+        return df
+
+    same = df.iloc[same_pos]
+    drop_same_pos = same_pos[same.duplicated(subset=cols, keep='first').to_numpy()]
+
+    keep = np.ones(len(df), dtype=bool)
+    keep[cross_pos] = False
+    keep[drop_same_pos] = False
+    st["dropped_cross_label"] = int(len(cross_pos))
+    st["dropped_same_label"] = int(len(drop_same_pos))
+    logger.info(
+        f"Dropped {st['dropped_cross_label']} cross-label duplicate rows and "
+        f"{st['dropped_same_label']} same-label duplicate rows."
+    )
+    return df[keep].reset_index(drop=True)
+
+
 def clean_data(
     features_df: pd.DataFrame,
     metadata_df: pd.DataFrame,
     handle_impossible_negatives: bool = True,
-    drop_constant_columns: bool = True
+    drop_constant_columns: bool = True,
+    stats: Optional[Dict[str, Any]] = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Clean the dataset by:
-    - Handling impossible negatives (set to NaN)
+    - Setting impossible negative values to NaN (they are imputed later, on train only)
+    - Removing duplicate feature rows (flow_id and Label are not part of the key)
     - Dropping constant columns
-    - Removing duplicate rows (excluding flow_id and Label from duplicate check)
-    - After feature dedupe, filter metadata to keep only rows with flow_id present in features.
-    - Note: Duplicate row removal is done in dataset reduction, but we can do it again if needed.
+    - Filtering metadata to the flow_ids that survive in features
+
+    Rows are only ever removed by the duplicate step, never because of NaN.
 
     Args:
-        features_df: DataFrame with features
-        metadata_df: DataFrame with metadata
-        handle_impossible_negatives: Whether to replace impossible negatives with NaN
-        drop_constant_columns: Whether to drop constant columns
+        stats: optional dict that is filled with the computed counts for each stage
+               (rows_in, duplicate counts, rows_removed_total, rows_out, ...).
 
     Returns:
         Tuple of (cleaned_features_df, cleaned_metadata_df)
     """
     logger.info("Starting data cleaning...")
 
-    # Make copies to avoid modifying originals
     features_clean = features_df.copy()
     metadata_clean = metadata_df.copy()
+    st: Dict[str, Any] = {"rows_in": len(features_clean)}
 
-    # Handle impossible negatives in features
+    neg_counts: Dict[str, int] = {}
     if handle_impossible_negatives:
-        # Define impossible negative features (based on domain knowledge)
-        impossible_neg_features = [
-            'Flow Duration', 'Total Fwd Packets', 'Total Backward Packets',
-            'Total Length of Fwd Packets', 'Total Length of Bwd Packets',
-            'Fwd Packet Length Max', 'Fwd Packet Length Min', 'Fwd Packet Length Mean',
-            'Fwd Packet Length Std', 'Bwd Packet Length Max', 'Bwd Packet Length Min',
-            'Bwd Packet Length Mean', 'Bwd Packet Length Std', 'Flow Bytes/s',
-            'Flow Packets/s', 'Flow IAT Mean', 'Flow IAT Std', 'Flow IAT Max',
-            'Flow IAT Min', 'Fwd IAT Total', 'Fwd IAT Mean', 'Fwd IAT Std',
-            'Fwd IAT Max', 'Fwd IAT Min', 'Bwd IAT Total', 'Bwd IAT Mean',
-            'Bwd IAT Std', 'Bwd IAT Max', 'Bwd IAT Min', 'Fwd PSH Flags',
-            'Bwd PSH Flags', 'Fwd URG Flags', 'Bwd URG Flags', 'Fwd Header Length',
-            'Bwd Header Length', 'Fwd Packets/s', 'Bwd Packets/s',
-            'Min Packet Length', 'Max Packet Length', 'Packet Length Mean',
-            'Packet Length Std', 'Packet Length Variance', 'FIN Flag Count',
-            'SYN Flag Count', 'RST Flag Count', 'PSH Flag Count',
-            'ACK Flag Count', 'URG Flag Count', 'CWE Flag Count',
-            'ECE Flag Count', 'Down/Up Ratio', 'Average Packet Size',
-            'Avg Fwd Segment Size', 'Avg Bwd Segment Size'
-        ]
-
-        # Filter to only those that exist in the dataframe
-        existing_neg_features = [f for f in impossible_neg_features if f in features_clean.columns]
-
-        for feat in existing_neg_features:
-            # Replace negative values with NaN
-            neg_count = (features_clean[feat] < 0).sum()
+        for feat in [f for f in IMPOSSIBLE_NEGATIVE_FEATURES if f in features_clean.columns]:
+            neg_mask = features_clean[feat] < 0
+            neg_count = int(neg_mask.sum())
             if neg_count > 0:
                 logger.warning(f"Feature {feat} has {neg_count} negative values. Setting to NaN.")
-                features_clean.loc[features_clean[feat] < 0, feat] = np.nan
+                features_clean.loc[neg_mask, feat] = np.nan
+                neg_counts[feat] = neg_count
+    st["negative_values_set_to_nan"] = neg_counts
 
-    # Handle duplicate rows
-    # Exclude flow_id and Label from duplicate check as they may legitimately differ
-    duplicate_check_cols = [col for col in features_clean.columns if col not in ['flow_id', 'Label']]
+    check_cols = [c for c in features_clean.columns if c not in ('flow_id', 'Label')]
+    st["rows_with_nan_after_negative_handling"] = (
+        int(features_clean[check_cols].isna().any(axis=1).sum()) if check_cols else 0
+    )
 
-    if len(duplicate_check_cols) > 0:
-        # Find all duplicate rows (marked as True for all duplicates of each group)
-        duplicate_mask_all = features_clean.duplicated(subset=duplicate_check_cols, keep=False)
-        duplicate_count = duplicate_mask_all.sum()
+    features_clean = _remove_duplicates(features_clean, check_cols, st)
+    st["rows_after_dedupe"] = len(features_clean)
 
-        if duplicate_count > 0:
-            logger.warning(f"Found {duplicate_count} duplicate feature rows.")
-
-            # Get the duplicate rows
-            duplicate_rows = features_clean[duplicate_mask_all].copy()
-
-            # Group by feature columns to analyze label distribution within each group
-            if 'Label' in features_clean.columns:
-                # Group duplicate rows by their feature values
-                duplicate_groups = duplicate_rows.groupby(duplicate_check_cols)
-
-                cross_label_groups = []
-                same_label_groups = []
-
-                for group_key, group_df in duplicate_groups:
-                    unique_labels = group_df['Label'].unique()
-                    if len(unique_labels) > 1:
-                        cross_label_groups.append((group_key, group_df))
-                    else:
-                        same_label_groups.append((group_key, group_df))
-
-                cross_label_row_count = sum(len(group_df) for _, group_df in cross_label_groups)
-                same_label_row_count = sum(len(group_df) for _, group_df in same_label_groups)
-                total_rows = len(features_clean)
-
-                cross_label_percentage = (cross_label_row_count / total_rows) * 100
-
-                logger.info(f"Duplicate analysis: {len(cross_label_groups)} cross-label groups ({cross_label_row_count} rows, {cross_label_percentage:.4f}%), "
-                            f"{len(same_label_groups)} same-label groups ({same_label_row_count} rows)")
-
-                # Apply the cross-label duplicate handling rule
-                if cross_label_percentage < 0.5:
-                    # Drop ALL rows in cross-label groups
-                    cross_label_indices = []
-                    for _, group_df in cross_label_groups:
-                        cross_label_indices.extend(group_df.index.tolist())
-
-                    # For same-label groups, keep exactly one row per group (first occurrence)
-                    same_label_indices_to_keep = []
-                    for _, group_df in same_label_groups:
-                        # Keep the first occurrence of each same-label group
-                        same_label_indices_to_keep.append(group_df.index[0])
-
-                    # Create mask for rows to keep:
-                    # - All non-duplicate rows
-                    # - One row per same-label duplicate group
-                    # - No rows from cross-label duplicate groups
-                    non_duplicate_mask = ~duplicate_mask_all
-                    same_label_keep_mask = pd.Series(False, index=features_clean.index)
-                    same_label_keep_mask[same_label_indices_to_keep] = True
-
-                    rows_to_keep_mask = non_duplicate_mask | same_label_keep_mask
-                    features_clean = features_clean[rows_to_keep_mask].reset_index(drop=True)
-
-                    logger.info(f"Dropped {cross_label_row_count} cross-label duplicate rows and "
-                                f"{same_label_row_count - len(same_label_indices_to_keep)} same-label duplicate rows "
-                                f"(kept {len(same_label_indices_to_keep)} rows from same-label groups).")
-                else:
-                    # Cross-label rows >= 0.5%, make no change and stop for decision
-                    logger.warning(f"Cross-label duplicate rows ({cross_label_percentage:.4f}%) >= 0.5%. "
-                                   "No changes made to duplicate handling. Manual review required.")
-                    # Make truly no changes to the data - do not remove any duplicates
-                    pass
-            else:
-                # No Label column, use original duplicate handling
-                logger.warning("Label column not found, using standard duplicate removal.")
-                duplicate_mask = features_clean.duplicated(subset=duplicate_check_cols, keep='first')
-                features_clean = features_clean[~duplicate_mask].reset_index(drop=True)
-        else:
-            logger.info("No duplicate feature rows found.")
-    else:
-        logger.warning("No feature columns available for duplicate checking.")
-
-    # Drop constant columns
+    constant_cols = []
     if drop_constant_columns:
-        constant_cols = []
         for col in features_clean.columns:
-            # Skip flow_id and Label if present (though Label should not be in features at this stage)
-            if col in ['flow_id', 'Label']:
+            if col in ('flow_id', 'Label'):
                 continue
-            # Check if column is constant (all values the same, ignoring NaN)
             if features_clean[col].nunique(dropna=False) == 1:
                 constant_cols.append(col)
-
         if constant_cols:
             logger.warning(f"Dropping constant columns: {constant_cols}")
             features_clean = features_clean.drop(columns=constant_cols)
+    st["constant_columns"] = constant_cols
+    st["rows_after_constant_drop"] = len(features_clean)
 
-    # After feature dedupe, filter metadata to keep only rows with flow_id present in features
-    # This ensures features and metadata have matching flow_id sets.
     if 'flow_id' in features_clean.columns and 'flow_id' in metadata_clean.columns:
-        # Get the set of flow_ids present in features
-        feature_flow_ids = set(features_clean['flow_id'])
-        # Filter metadata to keep only those flow_ids
-        metadata_clean = metadata_clean[metadata_clean['flow_id'].isin(feature_flow_ids)].reset_index(drop=True)
+        keep_ids = set(features_clean['flow_id'])
+        metadata_clean = metadata_clean[metadata_clean['flow_id'].isin(keep_ids)].reset_index(drop=True)
         logger.info(f"After syncing metadata to feature flow_ids: metadata shape {metadata_clean.shape}")
 
-    logger.info(f"Data cleaning complete. Features shape: {features_clean.shape}")
+    st["rows_removed_total"] = st["dropped_cross_label"] + st["dropped_same_label"]
+    st["rows_out"] = len(features_clean)
+    if st["rows_in"] - st["rows_removed_total"] != st["rows_out"]:
+        raise RuntimeError(f"Row accounting mismatch in clean_data: {st}")
 
+    logger.info(
+        f"Data cleaning complete. rows {st['rows_in']} -> {st['rows_out']} "
+        f"(removed {st['rows_removed_total']}). Features shape: {features_clean.shape}"
+    )
+    if stats is not None:
+        stats.update(st)
     return features_clean, metadata_clean
+
 
 def apply_label_grouping(
     features_df: pd.DataFrame,
@@ -234,70 +269,54 @@ def apply_label_grouping(
     label_mapping_config: Optional[Dict[str, str]] = None
 ) -> Tuple[pd.DataFrame, pd.DataFrame, Dict[str, str]]:
     """
-    Apply label grouping based on config.
+    Normalise labels and apply label grouping.
 
     Args:
-        features_df: DataFrame with features (should have Label column after merge)
-        metadata_df: DataFrame with metadata
-        label_mapping_config: Dictionary mapping original labels to new labels.
-                              If None, uses config or defaults to no grouping.
+        label_mapping_config: None -> use config ``preprocessing.label_groups``;
+                              {} -> identity mapping over the labels present;
+                              dict -> use that mapping.
 
     Returns:
         Tuple of (features_df_with_label, metadata_df, label_mapping_used)
     """
     logger.info("Applying label grouping...")
+    features_df = features_df.copy()
 
-    # If Label is not in features_df, merge from metadata_df
     if 'Label' not in features_df.columns:
-        # Merge Label from metadata_df using flow_id
-        features_df = features_df.merge(
-            metadata_df[['flow_id', 'Label']],
-            on='flow_id',
-            how='left'
-        )
+        features_df = features_df.merge(metadata_df[['flow_id', 'Label']], on='flow_id', how='left')
 
-    # Get label mapping from config if not provided (None means use config)
     if label_mapping_config is None:
         label_mapping_config = config.get("preprocessing.label_groups", {})
 
-    # First, normalize labels by replacing corrupted dash character
-    # The \x96 character appears as "Web Attack \x96 Brute Force" etc.
-    # Replace with proper dash: "Web Attack - Brute Force"
-    if 'Label' in features_df.columns:
-        features_df['Label'] = features_df['Label'].astype(str).apply(
-            lambda x: re.sub(r'[‐-―−﹘﹣－]', '-', x.strip())
-        )
+    features_df['Label'] = features_df['Label'].map(normalize_label)
 
-    # Handle label mapping:
-    # - If label_mapping_config is None (handled above), we got it from config
-    # - If label_mapping_config is {} (empty dict), return identity mapping over labels present
-    # - If label_mapping_config has values, use that mapping
-    if label_mapping_config == {}:
-        # Create identity mapping for all unique labels
-        unique_labels = features_df['Label'].unique()
-        label_mapping_config = {label: label for label in unique_labels}
-        logger.info("Empty label mapping provided. Using identity mapping.")
-    elif not label_mapping_config:
-        # This case shouldn't happen now that we distinguish None and {},
-        # but keep it for safety (handles other falsy values like False)
-        unique_labels = features_df['Label'].unique()
-        label_mapping_config = {label: label for label in unique_labels}
+    if not label_mapping_config:
+        label_mapping_config = {label: label for label in features_df['Label'].unique()}
         logger.info("No label grouping configured. Using identity mapping.")
     else:
         logger.info(f"Applying label grouping: {label_mapping_config}")
 
-    # Apply label mapping if provided (after identity handling)
-    if label_mapping_config:
-        features_df['Label'] = features_df['Label'].map(label_mapping_config).fillna(features_df['Label'])
-        logger.info(f"Applied label mapping: {label_mapping_config}")
+    features_df['Label'] = features_df['Label'].map(label_mapping_config).fillna(features_df['Label'])
 
-    # Additionally, ensure any label starting with "Web Attack" is mapped to "Web Attack"
-    # This catches any Web Attack variants not explicitly listed in the mapping.
-    if 'Label' in features_df.columns:
-        web_attack_mask = features_df['Label'].str.startswith('Web Attack')
-        features_df.loc[web_attack_mask, 'Label'] = 'Web Attack'
+    # Safety net: any other "Web Attack ..." variant is grouped too.
+    web_attack_mask = features_df['Label'].str.startswith('Web Attack')
+    features_df.loc[web_attack_mask, 'Label'] = 'Web Attack'
 
     return features_df, metadata_df, label_mapping_config
+
+
+def _warn_small_classes(y_train: pd.Series, y_val: pd.Series, y_test: pd.Series) -> None:
+    """Log loudly when a class is missing or has too few rows in a split."""
+    all_classes = sorted(set(y_train) | set(y_val) | set(y_test))
+    for name, y in (("train", y_train), ("val", y_val), ("test", y_test)):
+        counts = y.value_counts()
+        for cls in all_classes:
+            n = int(counts.get(cls, 0))
+            if n == 0:
+                logger.error(f"Class '{cls}' is MISSING from the {name} split.")
+            elif n < MIN_CLASS_ROWS:
+                logger.warning(f"Class '{cls}' has only {n} rows in the {name} split (< {MIN_CLASS_ROWS}).")
+
 
 def split_data(
     features_df: pd.DataFrame,
@@ -313,164 +332,148 @@ def split_data(
     pd.DataFrame, pd.DataFrame, pd.DataFrame
 ]:
     """
-    Split data into training, validation, and test sets.
-    Removes zero-day holdout labels (Infiltration, Heartbleed) before splitting
-    and saves them separately if output_dir is provided.
+    Split into train / validation / test. Zero-day holdout labels are removed first.
 
-    Args:
-        features_df: DataFrame with features (should include Label column for stratification)
-        metadata_df: DataFrame with metadata
-        split_mode: Either "stratified" or "time_aware"
-        train_ratio: Proportion of data for training
-        val_ratio: Proportion of data for validation
-        test_ratio: Proportion of data for testing
-        seed: Random seed
+    Features and metadata are linked by ``flow_id``. The returned X and y are indexed by
+    ``flow_id``; each meta frame keeps a ``flow_id`` column and is row-aligned with X.
+
+    split_mode:
+      "stratified" - random split stratified by Label (default).
+      "time_aware" - chronological split on metadata ``Timestamp`` (earliest -> train).
+                     Attacks happen on different days, so classes may be missing from
+                     later splits; this is reported loudly.
 
     Returns:
-        Tuple of (X_train, X_val, X_test, y_train, y_val, y_test, train_meta, val_meta, test_meta)
+        (X_train, X_val, X_test, y_train, y_val, y_test, train_meta, val_meta, test_meta)
     """
     if not np.isclose(train_ratio + val_ratio + test_ratio, 1.0):
         raise ValueError("Split ratios must sum to 1.0")
+    if split_mode not in ("stratified", "time_aware"):
+        raise ValueError(f"Unknown split_mode: {split_mode}")
 
-    # Remove zero-day holdout labels before splitting
-    from src.cyberagent.config import config
-    zero_day_holdout_labels = config.get("preprocessing.zero_day_holdout_labels", [])
-
-    if zero_day_holdout_labels and 'Label' in features_df.columns:
-        holdout_mask = features_df['Label'].isin(zero_day_holdout_labels)
+    has_label = 'Label' in features_df.columns
+    holdout_labels = config.get("preprocessing.zero_day_holdout_labels", [])
+    if holdout_labels and has_label:
+        holdout_mask = features_df['Label'].isin(holdout_labels)
         if holdout_mask.any():
-            # Remove holdout labels from the data to be split
-            features_df = features_df[~holdout_mask].copy()
-            metadata_df = metadata_df[metadata_df['flow_id'].isin(features_df['flow_id'])].copy()
+            features_df = features_df[~holdout_mask]
 
-    # Get indices
-    indices = np.arange(len(features_df))
+    features_df = features_df.reset_index(drop=True)
+    flow_ids = features_df['flow_id'].to_numpy()
+
+    if not metadata_df['flow_id'].is_unique:
+        raise ValueError("metadata_df has duplicate flow_id values")
+    meta_by_id = metadata_df.set_index('flow_id')
+    missing = np.setdiff1d(flow_ids, meta_by_id.index.to_numpy())
+    if len(missing) > 0:
+        raise ValueError(f"{len(missing)} flow_ids in features are missing from metadata (e.g. {missing[:5]})")
+
+    n = len(features_df)
+    indices = np.arange(n)
 
     if split_mode == "stratified":
-        # Stratify by Label if present, otherwise no stratification
-        if 'Label' in features_df.columns:
-            stratify = features_df['Label']
-            stratify_array = stratify.values
-        else:
-            stratify = None
-            stratify_array = None
+        labels = features_df['Label'].to_numpy() if has_label else None
+        train_idx, temp_idx = train_test_split(
+            indices, train_size=train_ratio, random_state=seed, stratify=labels
+        )
+        val_share = val_ratio / (val_ratio + test_ratio)
+        temp_labels = labels[temp_idx] if labels is not None else None
+        val_idx, test_idx = train_test_split(
+            temp_idx, train_size=val_share, random_state=seed, stratify=temp_labels
+        )
     else:
-        # For time_aware, we assume the data is already sorted by time
-        stratify = None
-        stratify_array = None
+        if 'Timestamp' not in meta_by_id.columns:
+            raise ValueError("time_aware split needs a 'Timestamp' column in the metadata")
+        ts = pd.to_datetime(meta_by_id.loc[flow_ids, 'Timestamp'], errors='coerce').to_numpy()
+        if pd.isna(ts).any():
+            logger.warning(f"{int(pd.isna(ts).sum())} rows have an unparseable Timestamp; placed last.")
+        order = np.argsort(ts, kind="stable")
+        n_train = int(round(n * train_ratio))
+        n_val = int(round(n * val_ratio))
+        train_idx = order[:n_train]
+        val_idx = order[n_train:n_train + n_val]
+        test_idx = order[n_train + n_val:]
 
-    # Split into train and temp (val + test)
-    train_indices, temp_indices = train_test_split(
-        indices,
-        train_size=train_ratio,
-        random_state=seed,
-        stratify=stratify_array
-    )
-
-    # Split temp into val and test
-    val_size = val_ratio / (val_ratio + test_ratio)
-    temp_stratify = stratify_array[temp_indices] if stratify_array is not None else None
-    val_indices, test_indices = train_test_split(
-        temp_indices,
-        train_size=val_size,
-        random_state=seed,
-        stratify=temp_stratify
-    )
-
-    # Extract data for each split
-    def _extract_split(idx):
-        X = features_df.iloc[idx].drop(columns=['flow_id', 'Label']) if 'Label' in features_df.columns else features_df.iloc[idx].drop(columns=['flow_id'])
-        y = features_df.iloc[idx]['Label'] if 'Label' in features_df.columns else pd.Series(dtype=object)
-        meta = metadata_df.iloc[idx]
+    def _take(idx):
+        sub = features_df.iloc[idx]
+        ids = sub['flow_id'].to_numpy()
+        drop_cols = ['flow_id', 'Label'] if has_label else ['flow_id']
+        X = sub.drop(columns=drop_cols)
+        X.index = pd.Index(ids, name='flow_id')
+        if has_label:
+            y = pd.Series(sub['Label'].to_numpy(), index=X.index, name='Label')
+        else:
+            y = pd.Series(dtype=object)
+        meta = meta_by_id.loc[ids].reset_index()      # flow_id column + aligned rows
+        meta.index = pd.Index(ids)
         return X, y, meta
 
-    X_train, y_train, train_meta = _extract_split(train_indices)
-    X_val, y_val, val_meta = _extract_split(val_indices)
-    X_test, y_test, test_meta = _extract_split(test_indices)
+    X_train, y_train, train_meta = _take(train_idx)
+    X_val, y_val, val_meta = _take(val_idx)
+    X_test, y_test, test_meta = _take(test_idx)
+
+    if has_label:
+        _warn_small_classes(y_train, y_val, y_test)
 
     return X_train, X_val, X_test, y_train, y_val, y_test, train_meta, val_meta, test_meta
 
+
 def preprocess_train_fit(
     X_train: pd.DataFrame,
+    y_train: pd.Series,
     correlation_threshold: float = 0.95,
-    feature_selection_method: str = "variance",
-    top_k_features: int = 50
-) -> Tuple[SimpleImputer, StandardScaler, np.ndarray]:
+    feature_selection_method: str = "mutual_info",
+    top_k_features: int = 40,
+    seed: int = 42,
+    return_selector: bool = False,
+):
     """
-    Fit preprocessing steps on training data.
+    Fit imputer, scaler and feature selector on TRAINING data only.
 
-    Args:
-        X_train: Training features DataFrame
-        correlation_threshold: Threshold for correlation pruning
-        feature_selection_method: Method for feature selection ("variance" or "mutual_info")
-        top_k_features: Number of top features to select
+    Feature selection = constant-column removal, correlation pruning
+    (``correlation_threshold`` >= 1.0 disables it) and mutual-information top-K using
+    ``y_train`` (see ``FeatureSelector``).
+
+    feature_selection_method:
+      "mutual_info" - correlation pruning, then top ``top_k_features`` by mutual information.
+      "none"        - correlation pruning only (no top-K ranking).
+      "variance"    - deprecated alias of "mutual_info".
 
     Returns:
-        Tuple of (imputer, scaler, feature_mask) where feature_mask is a boolean array
-        indicating which features to keep after correlation pruning and selection.
+        (imputer, scaler, feature_mask), or (imputer, scaler, feature_mask, selector) when
+        ``return_selector`` is True. feature_mask is a boolean array over X_train.columns.
     """
-    from sklearn.impute import SimpleImputer
-    from sklearn.preprocessing import StandardScaler
+    if len(X_train) != len(y_train):
+        raise ValueError("X_train and y_train must have the same length")
 
-    # Replace infinities with NaN before imputation
-    X_train_replaced = X_train.replace([np.inf, -np.inf], np.nan)
-    # Imputer
-    imputer = SimpleImputer(strategy='median')
-    imputer.fit(X_train_replaced)
-    X_imputed = imputer.transform(X_train_replaced)
-
-    # Scaler
-    scaler = StandardScaler()
-    scaler.fit(X_imputed)
-    X_scaled = scaler.transform(X_imputed)
-
-    # Correlation mask
-    corr_df = pd.DataFrame(X_scaled, columns=X_train.columns)
-    corr_matrix = corr_df.corr().abs()
-    upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
-    to_drop = [column for column in upper.columns if any(upper[column] > correlation_threshold)]
-    correlation_mask = np.array([col not in to_drop for col in X_train.columns])
-
-    # Selection mask
-    if feature_selection_method == "variance":
-        selector = VarianceThreshold(threshold=0.0)  # Remove zero variance features
-        selector.fit(X_scaled[:, correlation_mask])
-        # Select top k features by variance
-        variances = selector.variances_
-        if len(variances) > top_k_features:
-            # Get indices of top k variances
-            top_indices = np.argsort(variances)[-top_k_features:]
-            selection_mask = np.zeros(len(X_train.columns), dtype=bool)
-            selection_mask[correlation_mask] = False
-            selection_mask[correlation_mask][top_indices] = True
-        else:
-            selection_mask = np.zeros(len(X_train.columns), dtype=bool)
-            selection_mask[correlation_mask] = selector.get_support()
-    elif feature_selection_method == "mutual_info":
-        # For mutual_info_classif, we need y. We don't have y here.
-        # We'll need to pass y to this function or compute it differently.
-        # For now, we'll use variance as fallback and log a warning.
-        logger.warning("Mutual information feature selection requires y. Falling back to variance.")
-        selector = VarianceThreshold(threshold=0.0)  # Remove zero variance features
-        selector.fit(X_scaled[:, correlation_mask])
-        # Select top k features by variance
-        variances = selector.variances_
-        if len(variances) > top_k_features:
-            # Get indices of top k variances
-            top_indices = np.argsort(variances)[-top_k_features:]
-            selection_mask = np.zeros(len(X_train.columns), dtype=bool
-            )
-            selection_mask[correlation_mask] = False
-            selection_mask[correlation_mask][top_indices] = True
-        else:
-            selection_mask = np.zeros(len(X_train.columns), dtype=bool)
-            selection_mask[correlation_mask] = selector.get_support()
-    else:
+    method = feature_selection_method
+    if method == "variance":
+        logger.warning("feature_selection_method 'variance' is deprecated; using 'mutual_info'.")
+        method = "mutual_info"
+    if method not in ("mutual_info", "none"):
         raise ValueError(f"Unknown feature selection method: {feature_selection_method}")
 
-    # Combine masks: keep only if correlation_mask and selection_mask are both True
-    feature_mask = correlation_mask & selection_mask
+    X_replaced = X_train.replace([np.inf, -np.inf], np.nan)
+
+    imputer = SimpleImputer(strategy='median', keep_empty_features=True)
+    imputer.fit(X_replaced)
+    scaler = StandardScaler()
+    scaler.fit(imputer.transform(X_replaced))
+
+    selector = FeatureSelector(
+        corr_threshold=correlation_threshold,
+        top_k=top_k_features if method == "mutual_info" else None,
+        seed=seed,
+    )
+    selector.fit(X_replaced, y_train)
+
+    keep = set(selector.selected_)
+    feature_mask = np.array([c in keep for c in X_train.columns], dtype=bool)
+
+    if return_selector:
+        return imputer, scaler, feature_mask, selector
     return imputer, scaler, feature_mask
+
 
 def preprocess_transform(
     X: pd.DataFrame,
@@ -478,26 +481,12 @@ def preprocess_transform(
     scaler: StandardScaler,
     feature_mask: np.ndarray
 ) -> pd.DataFrame:
-    """
-    Transform data using fitted preprocessors.
-
-    Args:
-        X: Features DataFrame to transform
-        imputer: Fitted SimpleImputer
-        scaler: Fitted StandardScaler
-        feature_mask: Boolean mask indicating which features to keep
-
-    Returns:
-        Transformed features DataFrame
-    """
-    # Replace infinities with NaN before imputation
+    """Transform data with the fitted preprocessors and keep the selected features."""
     X_replaced = X.replace([np.inf, -np.inf], np.nan)
-    X_imputed = imputer.transform(X_replaced)
-    X_scaled = scaler.transform(X_imputed)
-    X_selected = X_scaled[:, feature_mask]
-    # Get the selected feature names
+    X_scaled = scaler.transform(imputer.transform(X_replaced))
     selected_features = X.columns[feature_mask]
-    return pd.DataFrame(X_selected, columns=selected_features, index=X.index)
+    return pd.DataFrame(X_scaled[:, feature_mask], columns=selected_features, index=X.index)
+
 
 def handle_imbalance(
     y_train: pd.Series,
@@ -507,182 +496,128 @@ def handle_imbalance(
     Handle class imbalance.
 
     Args:
-        y_train: Training labels
-        method: Method to handle imbalance ("class_weight" or "smote")
-
-    Returns:
-        Tuple of (y_train unchanged, info_dict)
+        method: "class_weight" (balanced weights returned in info) or "smote" (not implemented)
     """
     if method == "class_weight":
         from sklearn.utils.class_weight import compute_class_weight
-        # Calculate class weights
-        class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
-        class_weight_dict = dict(zip(np.unique(y_train), class_weights))
-        info = {'class_weight': class_weight_dict}
-        return y_train, info
+        classes = np.unique(y_train)
+        weights = compute_class_weight('balanced', classes=classes, y=y_train)
+        return y_train, {'class_weight': dict(zip(classes, weights))}
     elif method == "smote":
-        # TODO: Implement SMOTE
         raise NotImplementedError("SMOTE not implemented yet")
-    else:
-        raise ValueError(f"Unknown imbalance handling method: {method}")
+    raise ValueError(f"Unknown imbalance handling method: {method}")
 
-def example_preprocessing_pipeline() -> Dict[str, Any]:
+
+EXPECTED_SUPERVISED_LABELS = {
+    "BENIGN", "Bot", "DDoS", "DoS GoldenEye", "DoS Hulk",
+    "DoS Slowhttptest", "DoS slowloris", "FTP-Patator",
+    "PortScan", "SSH-Patator", "Web Attack",
+}
+
+
+def example_preprocessing_pipeline(save_outputs: bool = True) -> Dict[str, Any]:
     """
-    Example preprocessing pipeline that loads data, cleans it, applies label grouping,
-    splits into train/val/test and holdout, and preprocesses features.
+    Load -> label grouping -> clean -> holdout -> split -> fit/transform preprocessing.
+
+    Args:
+        save_outputs: when True (default) writes the zero-day holdout parquet files to
+                      ``dataset.processed_dir`` and ``selected_features.csv`` to
+                      ``results/tables``. Tests should pass False.
 
     Returns:
-        Dictionary with keys:
-            X_train, X_val, X_test: Preprocessed features (DataFrames)
-            y_train, y_val, y_test: Labels (Series)
-            imbalance_info: Dictionary with class weight information
+        dict with X_train/X_val/X_test (preprocessed, indexed by flow_id), y_train/y_val/y_test,
+        imbalance_info, plus selector, clean_stats and the holdout frames.
     """
-    from sklearn.utils.class_weight import compute_class_weight
-
-    # Load data
     features_df, metadata_df = load_reduced_data()
+    features_with_label, metadata_with_label, _ = apply_label_grouping(features_df, metadata_df)
 
-    # Apply label grouping
-    features_with_label, metadata_with_label, label_mapping = apply_label_grouping(
-        features_df, metadata_df
-    )
-
-    # Clean data (now that we have Label, we can get per-label dedupe counts)
+    clean_stats: Dict[str, Any] = {}
     features_clean, metadata_clean = clean_data(
         features_with_label, metadata_with_label,
-        handle_impossible_negatives=True,
-        drop_constant_columns=True
+        handle_impossible_negatives=config.get("preprocessing.handle_impossible_negatives", True),
+        drop_constant_columns=config.get("preprocessing.drop_constant_columns", True),
+        stats=clean_stats,
     )
 
-    # Check that flow_id and Label are not in the features for modeling (they will be removed later)
-    # But note: at this point, features_clean still has flow_id and Label.
-    # We will remove them when we split.
+    holdout_labels = config.get("preprocessing.zero_day_holdout_labels", [])
+    holdout_mask = features_clean['Label'].isin(holdout_labels)
+    supervised_features = features_clean[~holdout_mask].reset_index(drop=True)
+    holdout_features = features_clean[holdout_mask].reset_index(drop=True)
+    supervised_metadata = metadata_clean[metadata_clean['flow_id'].isin(set(supervised_features['flow_id']))]
+    holdout_metadata = metadata_clean[metadata_clean['flow_id'].isin(set(holdout_features['flow_id']))]
 
-    # Holdout split: remove zero-day holdout labels from supervised set
-    from src.cyberagent.config import config
-    zero_day_holdout_labels = config.get("preprocessing.zero_day_holdout_labels", [])
-    supervised_mask = ~features_clean['Label'].isin(zero_day_holdout_labels)
-    holdout_mask = features_clean['Label'].isin(zero_day_holdout_labels)
-
-    supervised_features = features_clean[supervised_mask].copy()
-    holdout_features = features_clean[holdout_mask].copy()
-
-    # Save holdout data to disk
-    processed_dir = config.get("dataset.processed_dir")
-    holdout_features_path = f"{processed_dir}/holdout_zero_day.parquet"
-    holdout_metadata_path = f"{processed_dir}/holdout_zero_day_meta.parquet"
-
-    # Ensure directory exists
-    from pathlib import Path
-    Path(holdout_features_path).parent.mkdir(parents=True, exist_ok=True)
-
-    # Print holdout label distribution
     if len(holdout_features) > 0:
-        holdout_counts = holdout_features['Label'].value_counts()
-        logger.info(f"Holdout label distribution:\n{holdout_counts}")
-        # Assert holdout set is exactly the zero-day holdout labels
-        expected_holdout_set = set(zero_day_holdout_labels)
-        actual_holdout_set = set(holdout_features['Label'].unique())
-        if actual_holdout_set != expected_holdout_set:
+        logger.info(f"Holdout label distribution:\n{holdout_features['Label'].value_counts()}")
+        if set(holdout_features['Label'].unique()) != set(holdout_labels):
             raise AssertionError(
-                f"Holdout set mismatch. Expected: {expected_holdout_set}, Got: {actual_holdout_set}"
+                f"Holdout set mismatch. Expected: {set(holdout_labels)}, "
+                f"Got: {set(holdout_features['Label'].unique())}"
             )
     else:
         logger.info("No holdout samples found.")
 
-    # Supervised set: split into train, val, test
-    # We will use the split_data function on the supervised set
-    # Note: supervised_features has flow_id, features, and Label
-    # metadata_clean has flow_id and maybe other columns? We'll use the metadata_clean that corresponds to the supervised set.
-    # We need to get the metadata for the supervised set.
-    # Since we filtered features_clean, we must also filter metadata_clean by the same flow_ids.
-    supervised_flow_ids = set(supervised_features['flow_id'])
-    supervised_metadata = metadata_clean[metadata_clean['flow_id'].isin(supervised_flow_ids)].copy()
-    holdout_metadata = metadata_clean[metadata_clean['flow_id'].isin(set(holdout_features['flow_id']))].copy()
+    if save_outputs:
+        processed_dir = Path(config.get("dataset.processed_dir"))
+        processed_dir.mkdir(parents=True, exist_ok=True)
+        holdout_features.to_parquet(processed_dir / "holdout_zero_day.parquet", compression='zstd')
+        holdout_metadata.reset_index(drop=True).to_parquet(
+            processed_dir / "holdout_zero_day_meta.parquet", compression='zstd'
+        )
 
-    # Reset index to avoid indexing issues in split_data
-    supervised_features = supervised_features.reset_index(drop=True)
-    supervised_metadata = supervised_metadata.reset_index(drop=True)
-    holdout_features = holdout_features.reset_index(drop=True)
-    holdout_metadata = holdout_metadata.reset_index(drop=True)
-
-    # Save holdout data to disk (after resetting index)
-    holdout_features.to_parquet(holdout_features_path, compression='zstd')
-    holdout_metadata.to_parquet(holdout_metadata_path, compression='zstd')
-
-    # Split supervised data
     (X_train, X_val, X_test,
      y_train, y_val, y_test,
      train_meta, val_meta, test_meta) = split_data(
-        supervised_features,
-        supervised_metadata,
+        supervised_features, supervised_metadata,
         split_mode=config.get("split.mode", "stratified"),
         train_ratio=config.get("split.train_ratio", 0.7),
         val_ratio=config.get("split.val_ratio", 0.15),
         test_ratio=config.get("split.test_ratio", 0.15),
-        seed=config.get("split.seed", 42)
+        seed=config.get("split.seed", 42),
     )
 
-    # Assert that flow_id and Label are not in the feature sets
     for df, name in [(X_train, "X_train"), (X_val, "X_val"), (X_test, "X_test")]:
-        if 'flow_id' in df.columns:
-            raise AssertionError(f"flow_id found in {name}")
-        if 'Label' in df.columns:
-            raise AssertionError(f"Label found in {name}")
+        for forbidden in ('flow_id', 'Label'):
+            if forbidden in df.columns:
+                raise AssertionError(f"{forbidden} found in {name}")
 
-    # Print live value_counts of y_train, y_val, y_test
     logger.info(f"y_train distribution:\n{y_train.value_counts()}")
     logger.info(f"y_val distribution:\n{y_val.value_counts()}")
     logger.info(f"y_test distribution:\n{y_test.value_counts()}")
 
-    # Assert supervised label set állt matches expected
-    expected_supervised_set = {
-        "BENIGN", "Bot", "DDoS", "DoS GoldenEye", "DoS Hulk",
-        "DoS Slowhttptest", "DoS slowloris", "FTP-Patator",
-        "PortScan", "SSH-Patator", "Web Attack"
-    }
-    actual_supervised_set = set(
-        pd.concat([y_train, y_val, y_test]).unique()
-    )
-    if actual_supervised_set != expected_supervised_set:
+    actual_labels = set(pd.concat([y_train, y_val, y_test]).unique())
+    if actual_labels != EXPECTED_SUPERVISED_LABELS:
         raise AssertionError(
-            f"Supervised label set mismatch. Expected: {expected_supervised_set}, Got: {actual_supervised_set}"
+            f"Supervised label set mismatch. Expected: {EXPECTED_SUPERVISED_LABELS}, Got: {actual_labels}"
         )
 
-    # Preprocessing: fit on training data
-    correlation_threshold = config.get("preprocessing.correlation_threshold", 0.95)
-    feature_selection_method = config.get("preprocessing.feature_selection_method", "mutual_info")
-    top_k_features = config.get("preprocessing.top_k_features", 50)
-
-    imputer, scaler, feature_mask = preprocess_train_fit(
-        X_train,
-        correlation_threshold=correlation_threshold,
-        feature_selection_method=feature_selection_method,
-        top_k_features=top_k_features
+    imputer, scaler, feature_mask, selector = preprocess_train_fit(
+        X_train, y_train,
+        correlation_threshold=config.get("preprocessing.correlation_threshold", 0.95),
+        feature_selection_method=config.get("preprocessing.feature_selection_method", "mutual_info"),
+        top_k_features=config.get("preprocessing.top_k_features", 40),
+        seed=config.get("split.seed", 42),
+        return_selector=True,
     )
 
-    # Transform all sets
-    X_train_processed = preprocess_transform(X_train, imputer, scaler, feature_mask)
-    X_val_processed = preprocess_transform(X_val, imputer, scaler, feature_mask)
-    X_test_processed = preprocess_transform(X_test, imputer, scaler, feature_mask)
+    X_train_p = preprocess_transform(X_train, imputer, scaler, feature_mask)
+    X_val_p = preprocess_transform(X_val, imputer, scaler, feature_mask)
+    X_test_p = preprocess_transform(X_test, imputer, scaler, feature_mask)
 
-    # Print feature count and column list
-    logger.info(f"Number of features after preprocessing: {X_train_processed.shape[1]}")
-    logger.info(f"Feature names: {list(X_train_processed.columns)}")
-
-    # Handle imbalance
-    y_train_processed, imbalance_info = handle_imbalance(
-        y_train,
-        method=config.get("imbalance.method", "class_weight")
+    logger.info(
+        f"Feature selection: {X_train.shape[1]} in -> {X_train_p.shape[1]} out "
+        f"({len(selector.dropped_constant_)} constant, {len(selector.dropped_corr_)} correlated, "
+        f"{len(selector.dropped_selection_)} low mutual information)"
     )
+    logger.info(f"Feature names: {list(X_train_p.columns)}")
+    if save_outputs:
+        selector.save_report(Path("results/tables") / "selected_features.csv")
 
-    # Return processed data
+    y_train_p, imbalance_info = handle_imbalance(y_train, method=config.get("imbalance.method", "class_weight"))
+
     return {
-        'X_train': X_train_processed,
-        'X_val': X_val_processed,
-        'X_test': X_test_processed,
-        'y_train': y_train_processed,
-        'y_val': y_val,
-        'y_test': y_test,
-        'imbalance_info': imbalance_info
+        'X_train': X_train_p, 'X_val': X_val_p, 'X_test': X_test_p,
+        'y_train': y_train_p, 'y_val': y_val, 'y_test': y_test,
+        'imbalance_info': imbalance_info,
+        'selector': selector, 'clean_stats': clean_stats,
+        'holdout_features': holdout_features, 'holdout_metadata': holdout_metadata,
     }

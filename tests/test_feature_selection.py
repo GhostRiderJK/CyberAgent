@@ -91,3 +91,18 @@ def test_length_mismatch_raises():
     X, y = make_frame()
     with pytest.raises(ValueError):
         FeatureSelector().fit(X, y.iloc[:-1])
+
+
+def test_threshold_of_one_disables_correlation_pruning():
+    X, y = make_frame()
+    sel = FeatureSelector(corr_threshold=1.0, top_k=None).fit(X, y)
+    assert sel.dropped_corr_ == {}
+    assert "informative_copy" in sel.selected_
+
+
+def test_string_labels_and_tiny_sample_do_not_crash():
+    X, y = make_frame()
+    labels = y.map({0: "BENIGN", 1: "PortScan"})
+    FeatureSelector(top_k=2, seed=0).fit(X, labels)                 # string class labels
+    sel = FeatureSelector(top_k=1, seed=0).fit(X.iloc[:4], labels.iloc[:4])   # 4 rows only
+    assert len(sel.selected_) == 1
