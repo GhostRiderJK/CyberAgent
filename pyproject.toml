@@ -26,6 +26,7 @@ dependencies = [
     "httpx",
     "pytest",
     "ruff",
+    "tabulate",
 ]
 
 [project.optional-dependencies]
