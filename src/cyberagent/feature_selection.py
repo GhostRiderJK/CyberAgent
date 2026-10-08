@@ -6,7 +6,8 @@ Steps (in order):
   1. Drop constant columns.
   2. Correlation pruning: walk the columns in order and drop a column when it
      correlates above ``corr_threshold`` with an already-kept column. The kept
-     partner is recorded so the choice can be explained.
+     partner is recorded so the choice can be explained. A threshold >= 1.0
+     disables this step.
   3. Mutual-information top-K using y_train (skipped when top_k is None or
      there are not more than top_k columns left).
 
@@ -66,16 +67,20 @@ class FeatureSelector:
         kept = [c for c in X.columns if c not in self.dropped_constant_]
 
         # 2. correlation pruning (median-filled copy; X itself is not modified)
+        #    A threshold >= 1.0 disables pruning.
         filled = X[kept].fillna(X[kept].median())
-        corr = filled.corr().abs().fillna(0.0)
         kept_after_corr: List[str] = []
-        for col in kept:
-            if kept_after_corr:
-                sims = corr.loc[col, kept_after_corr]
-                if sims.max() > self.corr_threshold:
-                    self.dropped_corr_[col] = str(sims.idxmax())
-                    continue
-            kept_after_corr.append(col)
+        if self.corr_threshold >= 1.0:
+            kept_after_corr = list(kept)
+        else:
+            corr = filled.corr().abs().fillna(0.0)
+            for col in kept:
+                if kept_after_corr:
+                    sims = corr.loc[col, kept_after_corr]
+                    if sims.max() > self.corr_threshold:
+                        self.dropped_corr_[col] = str(sims.idxmax())
+                        continue
+                kept_after_corr.append(col)
 
         # 3. mutual information top-K, using y_train
         selected = list(kept_after_corr)
@@ -86,7 +91,15 @@ class FeatureSelector:
                 rng = np.random.RandomState(self.seed)
                 idx = rng.choice(len(sub), self.mi_sample_size, replace=False)
                 sub, y_arr = sub.iloc[idx], y_arr[idx]
-            scores = mutual_info_classif(sub, y_arr, random_state=self.seed)
+            try:
+                scores = mutual_info_classif(
+                    sub, y_arr,
+                    n_neighbors=max(1, min(3, len(sub) - 1)),
+                    random_state=self.seed,
+                )
+            except ValueError as exc:  # e.g. too few samples
+                logger.warning("Mutual information failed (%s); ranking by variance instead", exc)
+                scores = sub.var().to_numpy()
             self.mi_scores_ = dict(zip(kept_after_corr, map(float, scores)))
             ranked = sorted(kept_after_corr, key=lambda c: (-self.mi_scores_[c], c))
             top = set(ranked[: self.top_k])
