@@ -8,6 +8,9 @@ import subprocess
 import os
 from pathlib import Path
 
+# Ensure the project root is in the Python path so that `src` can be imported
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 def run_command(cmd, cwd=None):
     """Run a command and stream output."""
     print(f"Running: {cmd}")
@@ -20,7 +23,7 @@ def run_command(cmd, cwd=None):
 def task_setup():
     """Install dependencies."""
     print("Setting up dependencies...")
-    run_command("uv sync")
+    run_command("python -m uv sync")
     # Also install frontend dependencies
     frontend_dir = Path(__file__).parent.parent / "frontend"
     if frontend_dir.exists():
@@ -29,37 +32,37 @@ def task_setup():
 def task_reduce():
     """Run dataset reduction."""
     print("Reducing dataset...")
-    run_command("uv run python -m scripts.reduce_dataset")
+    run_command("python -m uv run python -m scripts.reduce_dataset")
 
 def task_preprocess():
     """Run preprocessing."""
     print("Running preprocessing...")
-    run_command("uv run python -m scripts.preprocess")
+    run_command("python -m uv run python -m scripts.preprocess")
 
 def task_train():
     """Run model training."""
     print("Training models...")
-    run_command("uv run python -m scripts.train")
+    run_command("python -m uv run python -m scripts.train")
 
 def task_tune():
     """Run hyperparameter tuning."""
     print("Running hyperparameter tuning...")
-    run_command("uv run python -m scripts.tune")
+    run_command("python -m uv run python -m scripts.tune")
 
 def task_evaluate():
     """Run model evaluation."""
     print("Evaluating models...")
-    run_command("uv run python -m scripts.evaluate")
+    run_command("python -m uv run python -m scripts.evaluate")
 
 def task_agent_eval():
     """Run agent evaluation."""
     print("Evaluating agent...")
-    run_command("uv run python -m scripts.agent_eval")
+    run_command("python -m uv run python -m scripts.agent_eval")
 
 def task_api():
     """Start the API server."""
     print("Starting API server...")
-    run_command("uv run python -m cyberagent.api")
+    run_command("python -m uv run python -m cyberagent.api")
 
 def task_frontend():
     """Start the frontend development server."""
@@ -79,7 +82,7 @@ def task_dev():
     import time
 
     def start_api():
-        run_command("uv run python -m cyberagent.api")
+        run_command("python -m uv run python -m cyberagent.api")
 
     api_thread = threading.Thread(target=start_api, daemon=True)
     api_thread.start()
@@ -93,12 +96,49 @@ def task_dev():
 def task_test():
     """Run tests."""
     print("Running tests...")
-    run_command("uv run pytest")
+    run_command("python -m uv run pytest")
 
 def task_lint():
     """Run linter."""
     print("Running linter...")
-    run_command("uv run ruff check")
+    run_command("python -m uv run ruff check")
+
+def task_fix_labels():
+    """Fix labels in existing parquet files by normalizing and regrouping."""
+    print("Fixing labels in existing parquet files...")
+    from src.cyberagent.preprocess import load_reduced_data, apply_label_grouping
+    import pandas as pd
+    import os
+
+    # Load the existing data
+    features_df, metadata_df = load_reduced_data()
+
+    # Apply label normalization and grouping
+    features_df, metadata_df, label_mapping = apply_label_grouping(features_df, metadata_df)
+
+    # Save back to the same files (in place)
+    from src.cyberagent.config import config
+    processed_dir = config.get("dataset.processed_dir")
+    features_path = f"{processed_dir}/flows_features.parquet"
+    metadata_path = f"{processed_dir}/flows_meta.parquet"
+
+    # Ensure directory exists
+    from pathlib import Path
+    Path(features_path).parent.mkdir(parents=True, exist_ok=True)
+
+    # Save the fixed data
+    features_df.to_parquet(features_path, compression='zstd')
+    metadata_df.to_parquet(metadata_path, compression='zstd')
+
+    # Log file sizes
+    features_size = os.path.getsize(features_path) / (1024 * 1024)  # MB
+    metadata_size = os.path.getsize(metadata_path) / (1024 * 1024)  # MB
+    print(f"Fixed features file size: {features_size:.2f} MB")
+    print(f"Fixed metadata file size: {metadata_size:.2f} MB")
+
+    print(f"Label mapping applied: {label_mapping}")
+    print("Labels fixed successfully!")
+
 
 def task_all():
     """Run full pipeline: setup, reduce, preprocess, train, evaluate, agent-eval, api, frontend."""
@@ -113,9 +153,9 @@ def task_all():
     # For dev, we don't start API and frontend here as they block
     # Instead, we'll just note they need to be started manually
     print("Pipeline completed. To start API and frontend, run:")
-    print("  uv run python scripts/tasks.py api")
-    print("  uv run python scripts/tasks.py frontend")
-    print("Or for both: uv run python scripts/tasks.py dev")
+    print("  python scripts/tasks.py api")
+    print("  python scripts/tasks.py frontend")
+    print("Or for both: python scripts/tasks.py dev")
 
 def print_help():
     """Print help message."""
@@ -176,6 +216,9 @@ if __name__ == "__main__":
     elif task == "test":
         task_test()
     elif task == "lint":
+        task_lint()
+    elif task == "fix-labels":
+        task_fix_labels()
         task_lint()
     elif task == "all":
         task_all()

@@ -117,17 +117,21 @@ def test_load_data_synthetic():
 
 def test_load_data_real_not_found():
     """Test that loading real data fails gracefully when not present."""
-    # This should raise FileNotFoundError since we don't have the real data
-    try:
-        features_df, metadata_df = load_traffic_labelling_data()
-        # If we get here, it means the data exists (which is fine for testing)
-        print("Real data found and loaded successfully")
-        assert len(features_df) > 0
-        assert len(metadata_df) > 0
-    except FileNotFoundError as e:
-        # This is expected in our test environment
-        print(f"Expected error when real data not found: {e}")
-        assert "Data directory not found" in str(e) or "No CSV files found" in str(e)
+    # Point the loader at a tmp_path with no files and assert the clean "no data found" exit
+    import tempfile
+    import os
+    from pathlib import Path
+
+    # Create a temporary directory that doesn't contain the expected data structure
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Point to the temporary directory (which won't have the primary_folder subdir)
+        try:
+            features_df, metadata_df = load_traffic_labelling_data(raw_dir=temp_dir)
+            # If we get here, it means somehow data was found (unexpected)
+            assert False, "Expected FileNotFoundError but got data instead"
+        except FileNotFoundError as e:
+            # This is expected - either "Data directory not found" or "No CSV files found"
+            assert "Data directory not found" in str(e) or "No CSV files found" in str(e)
 
 def test_load_machinelearningcve_not_found():
     """Test that MachineLearningCSV loading handles missing data."""

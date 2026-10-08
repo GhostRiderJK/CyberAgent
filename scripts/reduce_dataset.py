@@ -2,15 +2,34 @@
 Dataset reduction script for CyberAgent.
 Reduces dataset size while preserving rare attack classes.
 """
+import sys
 import pandas as pd
 import numpy as np
 import os
+import re
 from pathlib import Path
 from typing import Tuple
 import yaml
 from src.cyberagent.config import config
 from src.cyberagent.logging_setup import logger
 from src.cyberagent.data_loader import load_data
+
+
+def normalize_label(label):
+    """Normalize label by stripping control characters and handling Web Attack variants."""
+    if pd.isna(label):
+        return label
+    # Strip control characters and normalize whitespace
+    label_str = str(label)
+    # Remove control characters (including \x96 which appears as \xc2\x96 in UTF-8 bytes)
+    label_str = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', label_str)
+    # Collapse multiple whitespace to single space
+    label_str = re.sub(r'\s+', ' ', label_str).strip()
+    # Handle Web Attack variants - ensure proper dash after "Web Attack"
+    # Only add dash if not already present
+    if not label_str.startswith('Web Attack - '):
+        label_str = re.sub(r'^Web Attack\s*', 'Web Attack - ', label_str)
+    return label_str
 
 def reduce_dataset(
     features_df: pd.DataFrame,
@@ -58,6 +77,30 @@ def reduce_dataset(
     # Get class distribution before reduction
     label_counts = features_df['Label'].value_counts()
     logger.info(f"Class distribution before reduction:\n{label_counts}")
+
+    # Normalize labels to handle control characters and Web Attack variants
+    def normalize_label(label):
+        if pd.isna(label):
+            return label
+        import re
+        # Strip control characters and normalize whitespace
+        label_str = str(label)
+        # Remove control characters (including \x96 which appears as \xc2\x96 in UTF-8 bytes)
+        label_str = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', label_str)
+        # Collapse multiple whitespace to single space
+        label_str = re.sub(r'\s+', ' ', label_str).strip()
+        # Handle Web Attack variants - ensure proper dash after "Web Attack"
+        # Only add dash if not already present
+        if not label_str.startswith('Web Attack - '):
+            label_str = re.sub(r'^Web Attack\s*', 'Web Attack - ', label_str)
+        return label_str
+
+    # Apply normalization to labels
+    features_df['Label'] = features_df['Label'].apply(normalize_label)
+
+    # Get updated label counts after normalization
+    label_counts = features_df['Label'].value_counts()
+    logger.info(f"Class distribution after label normalization:\n{label_counts}")
 
     # List to hold reduced dataframes
     reduced_dfs = []
@@ -205,33 +248,60 @@ def load_traffic_labelling_data(raw_dir: str = None) -> Tuple[pd.DataFrame, pd.D
     return load_tl_data(raw_dir)
 
 if __name__ == "__main__":
-    # Test the dataset reduction
-    logger.info("Testing dataset reduction...")
+    # Check if we want to run the synthetic test or the real reduction
+    if len(sys.argv) > 1 and sys.argv[1] == "--synthetic":
+        # Test the dataset reduction with synthetic data
+        logger.info("Testing dataset reduction with synthetic data...")
 
-    # Test with synthetic data
-    logger.info("Loading synthetic data...")
-    features, metadata = load_data(synthetic=True)
-    logger.info(f"Original synthetic features shape: {features.shape}")
-    logger.info(f"Original synthetic metadata shape: {metadata.shape}")
+        # Test with synthetic data
+        logger.info("Loading synthetic data...")
+        features, metadata = load_data(synthetic=True)
+        logger.info(f"Original synthetic features shape: {features.shape}")
+        logger.info(f"Original synthetic metadata shape: {metadata.shape}")
 
-    # Apply reduction with small caps for testing
-    reduced_features, reduced_metadata = reduce_dataset(
-        features, metadata,
-        benign_cap=100,
-        attack_cap=50,
-        seed=42
-    )
+        # Apply reduction with small caps for testing
+        reduced_features, reduced_metadata = reduce_dataset(
+            features, metadata,
+            benign_cap=100,
+            attack_cap=50,
+            seed=42
+        )
 
-    logger.info(f"Reduced synthetic features shape: {reduced_features.shape}")
-    logger.info(f"Reduced synthetic metadata shape: {reduced_metadata.shape}")
+        logger.info(f"Reduced synthetic features shape: {reduced_features.shape}")
+        logger.info(f"Reduced synthetic metadata shape: {reduced_metadata.shape}")
 
-    # Test saving
-    logger.info("Testing save functionality...")
-    save_reduced_dataset(
-        reduced_features,
-        reduced_metadata,
-        features_path="data/reduced_test_features.parquet",
-        metadata_path="data/reduced_test_metadata.parquet"
-    )
+        # Test saving
+        logger.info("Testing save functionality...")
+        save_reduced_dataset(
+            reduced_features,
+            reduced_metadata,
+            features_path="data/reduced_test_features.parquet",
+            metadata_path="data/reduced_test_metadata.parquet"
+        )
 
-    logger.info("Dataset reduction test complete!")
+        logger.info("Dataset reduction test complete!")
+    else:
+        # Run the real reduction
+        logger.info("Running dataset reduction on real data...")
+
+        # Load real data
+        features, metadata = load_traffic_labelling_data()
+        logger.info(f"Original real features shape: {features.shape}")
+        logger.info(f"Original real metadata shape: {metadata.shape}")
+
+        # Apply reduction with caps from config
+        reduced_features, reduced_metadata = reduce_dataset(
+            features, metadata,
+            benign_cap=config.get("reduction.benign_cap", 300000),
+            attack_cap=config.get("reduction.attack_cap", 50000),
+            seed=config.get("reduction.seed", config.get("seed", 42))
+        )
+
+        logger.info(f"Reduced real features shape: {reduced_features.shape}")
+        logger.info(f"Reduced real metadata shape: {reduced_metadata.shape}")
+
+        # Save the reduced dataset
+        logger.info("Saving reduced dataset...")
+        save_reduced_dataset(reduced_features, reduced_metadata)
+
+        logger.info("Dataset reduction complete!")
