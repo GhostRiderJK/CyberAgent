@@ -7,11 +7,8 @@ authors = [{name = "Your Name"}]
 dependencies = [
     "pandas",
     "numpy",
-    "pyarrow",
     "scikit-learn",
-    "imbalanced-learn",
     "lightgbm",
-    "xgboost",
     "joblib",
     "pyyaml",
     "pydantic",
