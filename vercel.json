@@ -4,17 +4,12 @@
     "api": {
       "root": "src",
       "framework": "fastapi",
-      "env": {
-        "VERCEL": "1"
-      }
+      "entrypoint": "src.cyberagent.api.main:app",
+      "entrypoint": "cyberagent.api.main:app"
     },
     "web": {
       "root": "frontend",
-      "framework": "vite",
-      "env": {
-        "VITE_API_BASE_URL": "",
-        "VITE_API_PATH_PREFIX": "/api"
-      }
+      "framework": "vite"
     }
   },
   "rewrites": [
