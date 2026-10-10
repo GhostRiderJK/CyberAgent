@@ -1,7 +1,7 @@
 import type { HealthResponse, ModelStatusResponse, PredictRequest, PredictResponse, FlowMetadataResponse, InvestigationResult } from '../models/apiModels';
 
-// Base URL for the API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+// Base URL for the API - using relative path for same-origin requests
+const API_BASE_URL = '';
 
 export const api = {
   healthCheck: async (): Promise<HealthResponse> => {
