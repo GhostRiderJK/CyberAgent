@@ -5,7 +5,7 @@ Handles loading and accessing configuration from config.yaml.
 import yaml
 import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 class Config:
     """Configuration manager."""
@@ -22,17 +22,22 @@ class Config:
         if not self._config:
             self.load_config()
     
-    def load_config(self, config_path: str = "config.yaml") -> None:
+    def load_config(self, config_path: Optional[str] = None) -> None:
         """
         Load configuration from YAML file.
-        
+
         Args:
-            config_path: Path to config.yaml file
+            config_path: Path to config.yaml file. If None, defaults to
+                config.yaml two levels up from this file (project root).
         """
-        config_file = Path(config_path)
+        if config_path is None:
+            # Default to config.yaml in project root (two levels up from this file)
+            config_file = Path(__file__).resolve().parents[2] / "config.yaml"
+        else:
+            config_file = Path(config_path)
         if not config_file.exists():
-            raise FileNotFoundError(f"Configuration file not found: {config_path}")
-        
+            raise FileNotFoundError(f"Configuration file not found: {config_file}")
+
         with open(config_file, 'r') as f:
             self._config = yaml.safe_load(f)
     

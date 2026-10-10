@@ -8,8 +8,8 @@ import os
 from pathlib import Path
 from typing import Tuple, Optional, Dict, Any, List
 import shap
-from src.cyberagent.config import config
-from src.cyberagent.logging_setup import logger
+from cyberagent.config import config
+from cyberagent.logging_setup import logger
 
 def explain_model(model, X_background: pd.DataFrame, X_to_explain: pd.DataFrame):
     """
@@ -208,9 +208,9 @@ def main():
 
     # In a real scenario, you would load a trained model and data
     # For this example, we'll use synthetic data and a dummy model
-    from src.cyberagent.data_loader import load_data
-    from src.cyberagent.preprocess import example_preprocessing_pipeline
-    from src.cyberagent.train import train_lightgbm
+    from cyberagent.data_loader import load_data
+    from cyberagent.preprocess import example_preprocessing_pipeline
+    from cyberagent.train import train_lightgbm
 
     # Run example preprocessing to get data
     data_dict = example_preprocessing_pipeline()

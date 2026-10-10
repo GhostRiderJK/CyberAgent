@@ -15,8 +15,8 @@ from sklearn.metrics import (
     confusion_matrix, classification_report,
     precision_recall_curve, roc_curve, auc
 )
-from src.cyberagent.config import config
-from src.cyberagent.logging_setup import logger
+from cyberagent.config import config
+from cyberagent.logging_setup import logger
 
 def calculate_metrics(y_true: np.ndarray, y_pred: np.ndarray, y_pred_proba: Optional[np.ndarray] = None) -> Dict[str, Any]:
     """

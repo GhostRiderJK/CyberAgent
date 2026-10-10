@@ -1,6 +1,6 @@
 import uvicorn
-from src.cyberagent.api.main import app
-from src.cyberagent.config import config
+from cyberagent.api.main import app
+from cyberagent.config import config
 
 if __name__ == "__main__":
     host = config.get("api.host", "0.0.0.0")

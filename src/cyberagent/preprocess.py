@@ -19,9 +19,9 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-from src.cyberagent.config import config
-from src.cyberagent.feature_selection import FeatureSelector
-from src.cyberagent.logging_setup import logger
+from cyberagent.config import config
+from cyberagent.feature_selection import FeatureSelector
+from cyberagent.logging_setup import logger
 
 MIN_CLASS_ROWS = 50            # warn when a class has fewer rows than this in a split
 CROSS_LABEL_LIMIT_PCT = 0.5    # above this, cross-label duplicates need a manual decision
