@@ -33,7 +33,7 @@ export default function TopBar() {
           </p>
         </div>
         <div className="flex items-center space-x-4 text-navy-400">
-          <div className="relative">
+          <div className="hidden">
             <button className="flex items-center space-x-2 text-navy-300 hover:text-navy-100">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-6-6 6 6 0 00-6 6v3.158a2.032 2.032 0 00-.595 1.405H9"></path>
@@ -53,8 +53,8 @@ export default function TopBar() {
             </div>
           </div>
           <div className="flex items-center space-x-3">
-            <div className="h-2.5 w-2.5 bg-emerald-400 rounded-full animate-pulse" />
-            <span className="text-navy-100">System Online</span>
+            <div className="h-2.5 w-2.5 bg-cyan-400 rounded-full" />
+            <span className="text-navy-100">API status unknown</span>
           </div>
         </div>
       </div>

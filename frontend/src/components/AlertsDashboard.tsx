@@ -1,52 +1,16 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableRow, TableCaption } from '@/components/ui/table';
-import SeverityBadge from '@/components/shared/SeverityBadge';
+import { useMemo, useState } from 'react';
 import { mockAlerts } from '@/mocks/alerts';
 
 export default function AlertsDashboard() {
+  const [query,setQuery] = useState('');
+  const [severity,setSeverity] = useState('all');
+  const alerts = useMemo(() => mockAlerts.filter(alert => (severity === 'all' || alert.severity === severity) && `${alert.id} ${alert.class} ${alert.sourceIp}`.toLowerCase().includes(query.toLowerCase())), [query,severity]);
+  const color: Record<string,string> = {critical:'badge-red',high:'badge-red',medium:'badge-amber',low:'badge-emerald'};
   return (
     <div className="space-y-6">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="text-navy-200">Network Flow Alerts</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="overflow-x-auto">
-            <Table className="w-full">
-              <TableCaption className="text-navy-400">
-                Total alerts: {mockAlerts.length}
-              </TableCaption>
-              <TableHead>
-                <TableRow className="bg-navy-800 text-navy-50">
-                  <TableCell className="px-4 py-2">ID</TableCell>
-                  <TableCell className="px-4 py-2">Classification</TableCell>
-                  <TableCell className="px-4 py-2">Confidence</TableCell>
-                  <TableCell className="px-4 py-2">Severity</TableCell>
-                  <TableCell className="px-4 py-2">Source IP</TableCell>
-                  <TableCell className="px-4 py-2">Timestamp</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {mockAlerts.map((alert) => (
-                  <TableRow key={alert.id} className="border-t border-navy-700/50 hover:bg-navy-800/50">
-                    <TableCell className="px-4 py-2">{alert.id}</TableCell>
-                    <TableCell className="px-4 py-2">{alert.class}</TableCell>
-                    <TableCell className="px-4 py-2">
-                      {(alert.confidence * 100).toFixed(1)}%
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      <SeverityBadge severity={alert.severity} className="ml-2" />
-                    </TableCell>
-                    <TableCell className="px-4 py-2">{alert.sourceIp}</TableCell>
-                    <TableCell className="px-4 py-2">{alert.timestamp}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      <section><p className="eyebrow">Alert triage</p><div className="mt-2 flex flex-wrap items-end justify-between gap-4"><div><h2 className="font-display text-3xl font-semibold">Network flow alerts</h2><p className="mt-1 text-sm text-slate-400">Local fixture records are clearly separated from API-derived alerts.</p></div><span className="badge badge-amber">Demo data</span></div></section>
+      <section className="glass panel flex flex-col gap-3 p-4 lg:flex-row"><input aria-label="Search alerts" value={query} onChange={e=>setQuery(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600" placeholder="Search flow ID, classification, or source IP"/><select aria-label="Filter by severity" value={severity} onChange={e=>setSeverity(e.target.value)} className="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-300"><option value="all">All severities</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select><div className="px-2 py-2 text-sm text-slate-500">{alerts.length} of {mockAlerts.length} records</div></section>
+      <section className="surface panel overflow-hidden"><div className="overflow-x-auto"><table className="data-table"><thead><tr><th>Flow ID</th><th>Classification</th><th>Model score</th><th>Severity</th><th>Source</th><th>Timestamp</th><th>Action</th></tr></thead><tbody>{alerts.map(alert=><tr key={alert.id}><td className="mono">FLOW-{String(alert.id).padStart(4,'0')}</td><td className="font-medium text-slate-100">{alert.class}</td><td>{(alert.confidence*100).toFixed(1)}%</td><td><span className={`badge ${color[alert.severity]}`}>{alert.severity}</span></td><td className="mono text-xs">{alert.sourceIp}</td><td className="mono text-xs">{alert.timestamp}</td><td><a href="/investigation" className="text-xs font-semibold text-cyan-300 hover:text-cyan-100">Investigate →</a></td></tr>)}{alerts.length===0&&<tr><td colSpan={7} className="p-10 text-center text-slate-500">No fixture records match these filters.</td></tr>}</tbody></table></div></section>
     </div>
   );
 }

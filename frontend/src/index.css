@@ -1,17 +1,11 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@theme {
-  --color-navy-50: #f0f4f8;
-  --color-navy-100: #e0e7ff;
-  --color-navy-200: #c7d2fe;
-  --color-navy-300: #a5b4fc;
-  --color-navy-400: #818cf8;
-  --color-navy-500: #6366f1;
-  --color-navy-600: #4f46e5;
-  --color-navy-700: #4338ca;
-  --color-navy-800: #3730a3;
-  --color-navy-900: #312e81;
-  --color-navy-950: #1e1b4b;
-}
+@import "tailwindcss";
+:root { font-family: Satoshi, Inter, ui-sans-serif, system-ui, sans-serif; color: #f8fafc; background: #0a0e27; font-synthesis: none; }
+* { box-sizing: border-box; } body { margin: 0; min-width: 320px; min-height: 100vh; background: #0a0e27; } button, input, select { font: inherit; } button { cursor: pointer; }
+.app-canvas { min-height:100vh; background:radial-gradient(circle at 85% -10%,rgba(102,126,234,.18),transparent 34rem),radial-gradient(circle at 5% 80%,rgba(34,211,238,.06),transparent 28rem),#0a0e27; position:relative; isolation:isolate; }
+.app-canvas::before { content:""; position:fixed; inset:0; pointer-events:none; opacity:.45; z-index:-1; background-image:linear-gradient(rgba(148,163,184,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.07) 1px,transparent 1px); background-size:48px 48px; mask-image:linear-gradient(to bottom,black,transparent 90%); }
+.font-display { font-family:"Clash Grotesk",Satoshi,Inter,ui-sans-serif,system-ui,sans-serif; letter-spacing:-.025em; }.mono { font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace; }.glass { background:rgba(16,23,51,.68); border:1px solid rgba(255,255,255,.1); box-shadow:0 16px 48px rgba(0,0,0,.22); backdrop-filter:blur(18px); }.surface { background:rgba(8,13,34,.92); border:1px solid rgba(255,255,255,.09); box-shadow:0 14px 35px rgba(0,0,0,.18); }.panel { border-radius:20px; }.eyebrow { color:#22d3ee; font-size:.69rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }.muted { color:#94a3b8; }
+.btn { border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:.6rem .85rem; background:rgba(255,255,255,.05); color:#cbd5e1; transition:all .2s ease; }.btn:hover { border-color:rgba(34,211,238,.55); color:#f8fafc; background:rgba(34,211,238,.08); }.btn:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible { outline:2px solid #22d3ee; outline-offset:3px; }
+.badge { display:inline-flex; align-items:center; gap:.35rem; border-radius:999px; padding:.26rem .55rem; font-size:.72rem; font-weight:700; line-height:1; border:1px solid transparent; }.badge::before { content:""; width:.4rem; height:.4rem; border-radius:50%; background:currentColor; }.badge-emerald { color:#34d399; background:rgba(52,211,153,.11); border-color:rgba(52,211,153,.24); }.badge-cyan { color:#22d3ee; background:rgba(34,211,238,.11); border-color:rgba(34,211,238,.24); }.badge-amber { color:#fbbf24; background:rgba(251,191,36,.11); border-color:rgba(251,191,36,.24); }.badge-red { color:#f87171; background:rgba(248,113,113,.11); border-color:rgba(248,113,113,.24); }
+.data-table { width:100%; border-collapse:collapse; font-size:.82rem; }.data-table th { color:#94a3b8; font-size:.68rem; letter-spacing:.08em; text-align:left; text-transform:uppercase; padding:.8rem 1rem; background:rgba(255,255,255,.035); }.data-table td { padding:.85rem 1rem; border-top:1px solid rgba(255,255,255,.07); color:#cbd5e1; }.data-table tr:hover td { background:rgba(34,211,238,.035); }
+.card { background:rgba(8,13,34,.92); border:1px solid rgba(255,255,255,.09); border-radius:20px; box-shadow:0 14px 35px rgba(0,0,0,.18); padding:1.25rem; color:#f8fafc; }.card .text-muted-foreground { color:#94a3b8; }.card table { width:100%; border-collapse:collapse; }.card th,.card td { padding:.7rem; border-color:rgba(255,255,255,.08); }.card caption { color:#94a3b8; }.card .bg-navy-800 { background:rgba(255,255,255,.04); }
+@media (prefers-reduced-motion:no-preference) { .lift { transition:transform .22s ease,border-color .22s ease; }.lift:hover { transform:translateY(-3px); border-color:rgba(34,211,238,.28); } } @media (max-width:760px) { .desktop-sidebar { display:none; } }

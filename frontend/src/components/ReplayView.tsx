@@ -1,5 +1,4 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableRow, TableCaption } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { mockReplaySession, mockReplayFlows, mockReplayStats } from '@/mocks/replay';
@@ -14,9 +13,9 @@ export default function ReplayView() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6"><section className="flex flex-wrap items-end justify-between gap-3"><div><p className="eyebrow">Controlled playback</p><h2 className="font-display mt-2 text-3xl font-semibold">Flow replay</h2><p className="mt-1 text-sm text-slate-400">This interface displays five static replay fixtures, not a live network stream.</p></div><span className="badge badge-amber">Demo fixtures</span></section>
       {/* Replay Session Info */}
-      <Card className="w-full">
+      <Card className="surface panel w-full">
         <CardHeader>
           <CardTitle>Replay Session</CardTitle>
         </CardHeader>
@@ -53,7 +52,7 @@ export default function ReplayView() {
       </Card>
 
       {/* Replay Statistics */}
-      <Card className="w-full">
+      <Card className="surface panel w-full">
         <CardHeader>
           <CardTitle>Replay Statistics</CardTitle>
         </CardHeader>
@@ -82,7 +81,7 @@ export default function ReplayView() {
       </Card>
 
       {/* Recent Flows Table */}
-      <Card className="w-full">
+      <Card className="surface panel w-full">
         <CardHeader>
           <CardTitle>Recent Flows</CardTitle>
         </CardHeader>
@@ -128,30 +127,14 @@ export default function ReplayView() {
       </Card>
 
       {/* Replay Controls */}
-      <Card className="w-full">
+      <Card className="surface panel w-full">
         <CardHeader>
           <CardTitle>Replay Controls</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center space-x-4">
-            <button
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md transition-colors disabled:opacity-50"
-              onClick={() => {
-                // TODO: Implement replay start/pause/resume/stop
-                alert('Replay control not implemented in prototype');
-              }}
-            >
-              {mockReplaySession.status === 'running' ? 'Pause' : 'Start'}
-            </button>
-            <button
-              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-md transition-colors disabled:opacity-50"
-              onClick={() => {
-                // TODO: Implement replay stop
-                alert('Replay stop not implemented in prototype');
-              }}
-            >
-              Stop
-            </button>
+            <button className="btn" disabled title="Replay controls are not connected to a backend">{mockReplaySession.status === 'running' ? 'Pause unavailable' : 'Start unavailable'}</button>
+            <span className="text-sm text-slate-500">Controls are disabled until the replay API is implemented.</span>
           </div>
         </CardContent>
       </Card>
