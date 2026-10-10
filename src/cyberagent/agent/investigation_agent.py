@@ -6,14 +6,14 @@ to investigate ML-detected flows.
 import time
 import json
 from typing import Dict, Any, List, Optional, Tuple, Union
-from src.cyberagent.investigation import (
+from cyberagent.investigation import (
     predict_proba,
     explain_flow,
     find_related_flows,
     similar_known_attacks,
     lookup_attack_pattern
 )
-from src.cyberagent.logging_setup import logger
+from cyberagent.logging_setup import logger
 
 # Maximum tool calls per event as per requirements
 MAX_TOOL_CALLS = 6

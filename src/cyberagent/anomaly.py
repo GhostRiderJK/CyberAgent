@@ -10,8 +10,8 @@ from typing import Tuple, Optional
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 import joblib
-from src.cyberagent.config import config
-from src.cyberagent.logging_setup import logger
+from cyberagent.config import config
+from cyberagent.logging_setup import logger
 
 def train_isolation_forest(
     X_train: pd.DataFrame,
@@ -150,8 +150,8 @@ def main():
 
     # In a real scenario, you would load and preprocess data
     # For this example, we'll use synthetic data
-    from src.cyberagent.data_loader import load_data
-    from src.cyberagent.preprocess import example_preprocessing_pipeline
+    from cyberagent.data_loader import load_data
+    from cyberagent.preprocess import example_preprocessing_pipeline
 
     # Run example preprocessing to get data
     data_dict = example_preprocessing_pipeline()

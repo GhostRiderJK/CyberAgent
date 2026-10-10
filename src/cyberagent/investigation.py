@@ -8,13 +8,13 @@ import os
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple, Union
 import json
-from src.cyberagent.config import config
-from src.cyberagent.data_loader import load_data
-from src.cyberagent.preprocess import example_preprocessing_pipeline
-from src.cyberagent.train import train_lightgbm
-from src.cyberagent.explain import explain_instance_top_features, explain_model
+from cyberagent.config import config
+from cyberagent.data_loader import load_data
+from cyberagent.preprocess import example_preprocessing_pipeline
+from cyberagent.train import train_lightgbm
+from cyberagent.explain import explain_instance_top_features, explain_model
 import joblib
-from src.cyberagent.logging_setup import logger
+from cyberagent.logging_setup import logger
 
 # Global variables to cache loaded data and models
 _features_df_full: Optional[pd.DataFrame] = None   # with flow_id column, all original features
@@ -512,7 +512,7 @@ def lookup_attack_pattern(label: str) -> Dict[str, Any]:
     logger.info(f"Looking up attack pattern for label: {label}")
 
     # Normalize the label to match our labeling convention
-    from src.cyberagent.data_loader import normalize_label
+    from cyberagent.data_loader import normalize_label
     normalized_label = normalize_label(label)
 
     # Check if we have label information in features dataframe (not metadata)

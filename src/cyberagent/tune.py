@@ -19,8 +19,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 import lightgbm as lgb
 import xgboost as xgb
-from src.cyberagent.config import config
-from src.cyberagent.logging_setup import logger
+from cyberagent.config import config
+from cyberagent.logging_setup import logger
 import mlflow
 import mlflow.sklearn
 import mlflow.lightgbm

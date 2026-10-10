@@ -8,8 +8,8 @@ import pandas as pd  # We need pandas for the flow metadata endpoint
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
-from src.cyberagent.api import models
-from src.cyberagent.investigation import (
+from cyberagent.api import models
+from cyberagent.investigation import (
     predict_proba,
     explain_flow,
     find_related_flows,
@@ -19,10 +19,10 @@ from src.cyberagent.investigation import (
     _model,
     _features_df_model,
 )
-import src.cyberagent.investigation as investigation_module
-from src.cyberagent.agent.investigation_agent import investigate_flow
-from src.cyberagent.config import config
-from src.cyberagent.logging_setup import logger
+import cyberagent.investigation as investigation_module
+from cyberagent.agent.investigation_agent import investigate_flow
+from cyberagent.config import config
+from cyberagent.logging_setup import logger
 
 # Thread pool for running blocking investigation tasks
 executor = ThreadPoolExecutor(max_workers=4)
