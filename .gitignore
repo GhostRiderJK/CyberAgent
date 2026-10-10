@@ -83,3 +83,5 @@ structure.txt
 
 # Keep empty directories
 .gitkeep
+.vercel
+.env*
