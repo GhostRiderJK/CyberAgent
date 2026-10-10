@@ -2,7 +2,6 @@ import * as React from "react";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableRow, TableCaption } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { mockModelMetrics, mockModelComparison, mockConfusionMatrix, mockPRCurveData } from '@/mocks/modelResults';
 
@@ -32,16 +31,15 @@ export default function ModelResultsPage() {
   }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6"><section><p className="eyebrow">Reproducible evaluation</p><h2 className="font-display mt-2 text-3xl font-semibold">Model performance</h2><p className="mt-1 text-sm text-slate-400">Values below are sourced from the repository’s verified held-out evaluation artifact (53,342 samples), not operational traffic.</p></section>
       {/* Model Comparison Table */}
-      <Card className="w-full">
-        <CardHeader>
+      <Card className="surface panel w-full overflow-hidden"><CardHeader className="p-5 pb-0">
           <CardTitle className="text-navy-200">Model Comparison</CardTitle>
-          <CardDescription className="text-navy-400">
-            Comparison of different models trained on the dataset. The best model is highlighted.
+          <CardDescription className="mt-1 text-sm text-slate-400">
+            Held-out evaluation snapshot. LightGBM is selected by macro F1; this does not establish real-world generalization.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 p-5">
           <div className="overflow-x-auto">
             <Table className="w-full">
               <TableCaption className="text-navy-400 mb-4">

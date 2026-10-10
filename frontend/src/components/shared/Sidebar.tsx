@@ -3,15 +3,15 @@ import { NavLink } from 'react-router-dom';
 
 export default function Sidebar() {
   return (
-    <aside className="w-64 bg-navy-950/80 backdrop-blur-xl border-r border-navy-600/20 flex flex-col h-full">
+    <aside className="desktop-sidebar glass sticky top-0 w-64 shrink-0 border-y-0 border-l-0 flex flex-col h-screen">
       <div className="flex-shrink-0 p-6">
         <div className="flex items-center space-x-3">
           <svg className="h-8 w-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
           </svg>
           <div className="space-y-1">
-            <p className="text-navy-100 font-semibold text-lg">CyberAgent</p>
-            <p className="text-navy-400 text-sm">AI Security Operations</p>
+            <p className="font-display text-slate-100 font-semibold text-lg">CyberAgent</p>
+            <p className="text-slate-400 text-xs tracking-wider">AI SECURITY OPERATIONS</p>
           </div>
         </div>
       </div>
@@ -85,11 +85,11 @@ export default function Sidebar() {
       <div className="flex-shrink-0 p-4 border-t border-navy-700/20">
         <div className="flex items-center space-x-3 text-navy-400 text-xs">
           <div className="h-2.5 w-2.5 bg-emerald-400 rounded-full" />
-          <span>System Online</span>
+          <span>Backend status unknown</span>
         </div>
         <div className="flex items-center space-x-3 text-navy-400 text-xs mt-1">
           <div className="h-2.5 w-2.5 bg-cyan-400 rounded-full" />
-          <span>Model Ready</span>
+          <span>Model status unknown</span>
         </div>
       </div>
     </aside>

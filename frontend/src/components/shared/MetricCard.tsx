@@ -5,7 +5,6 @@ interface MetricCardProps {
   value: string | number;
   subtitle?: string;
   icon: React.ReactNode;
-  variant?: 'default' | 'primary' | 'secondary' | 'destructive' | 'outline';
   accentColor?: 'emerald' | 'cyan' | 'amber' | 'red' | 'indigo' | 'purple';
 }
 
@@ -14,7 +13,6 @@ export default function MetricCard({
   value,
   subtitle,
   icon,
-  variant = 'default',
   accentColor = 'cyan',
 }: MetricCardProps) {
   // Map accent colors to Tailwind classes

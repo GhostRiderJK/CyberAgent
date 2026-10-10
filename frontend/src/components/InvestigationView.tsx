@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { mockInvestigationReport, mockToolCalls, mockShapData } from '@/mocks/investigation';
@@ -14,13 +14,12 @@ export default function InvestigationView() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6"><section className="flex flex-wrap items-end justify-between gap-3"><div><p className="eyebrow">Evidence workspace</p><h2 className="font-display mt-2 text-3xl font-semibold">Investigation report</h2><p className="mt-1 text-sm text-slate-400">The current report is a labeled fixture. Streaming results remain available through the existing POST /investigate client.</p></div><span className="badge badge-amber">Fixture report</span></section>
       {/* Report Summary */}
-      <Card className="w-full">
-        <CardHeader>
+      <Card className="surface panel w-full"><CardHeader className="p-1">
           <CardTitle>Investigation Report</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Predicted Class</p>
@@ -59,7 +58,7 @@ export default function InvestigationView() {
       </Card>
 
       {/* SHAP Explanation Chart */}
-      <Card className="w-full">
+      <Card className="surface panel w-full">
         <CardHeader>
           <CardTitle>Feature Explanation (SHAP Values)</CardTitle>
           <CardDescription>
@@ -81,7 +80,7 @@ export default function InvestigationView() {
       </Card>
 
       {/* Tool Calls Timeline */}
-      <Card className="w-full">
+      <Card className="surface panel w-full">
         <CardHeader>
           <CardTitle>Tool Calls Timeline</CardTitle>
         </CardHeader>
@@ -108,7 +107,7 @@ export default function InvestigationView() {
       </Card>
 
       {/* Evidence Table */}
-      <Card className="w-full">
+      <Card className="surface panel w-full">
         <CardHeader>
           <CardTitle>Evidence</CardTitle>
         </CardHeader>
@@ -140,7 +139,7 @@ export default function InvestigationView() {
       </Card>
 
       {/* Recommended Actions */}
-      <Card className="w-full">
+      <Card className="surface panel w-full">
         <CardHeader>
           <CardTitle>Recommended Actions</CardTitle>
         </CardHeader>
@@ -163,7 +162,7 @@ export default function InvestigationView() {
       </Card>
 
       {/* Limitations */}
-      <Card className="w-full">
+      <Card className="surface panel w-full">
         <CardHeader>
           <CardTitle>Limitations</CardTitle>
         </CardHeader>

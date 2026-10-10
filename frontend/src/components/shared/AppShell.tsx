@@ -1,22 +1,7 @@
-import React from 'react';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
-import { Outlet } from 'react-router-dom';
+import type { ReactNode } from 'react';
 
-interface AppShellProps {
-  children: React.ReactNode;
-}
-
-export default function AppShell({ children }: AppShellProps) {
-  return (
-    <div className="min-h-screen bg-navy-900 text-navy-50 relative">
-      <div className="flex min-h-screen">
-        <Sidebar />
-        <div className="flex-1 flex flex-col">
-          <TopBar />
-          <main className="flex-1 p-6 overflow-y-auto">{children}</main>
-        </div>
-      </div>
-    </div>
-  );
+export default function AppShell({ children }: { children: ReactNode }) {
+  return <div className="app-canvas"><div className="flex min-h-screen"><Sidebar /><div className="min-w-0 flex-1"><TopBar /><main className="mx-auto w-full max-w-[1680px] p-4 sm:p-6 lg:p-8">{children}</main></div></div></div>;
 }
