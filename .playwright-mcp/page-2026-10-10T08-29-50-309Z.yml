@@ -1,0 +1,39 @@
+- generic [ref=e4]:
+  - complementary [ref=e5]:
+    - generic [ref=e10]:
+      - paragraph [ref=e11]: CyberAgent
+      - paragraph [ref=e12]: AI Security Operations
+    - navigation [ref=e13]:
+      - link "Overview" [ref=e14] [cursor=pointer]:
+        - /url: /
+      - link "Alerts" [ref=e17] [cursor=pointer]:
+        - /url: /alerts
+      - link "Investigations" [ref=e20] [cursor=pointer]:
+        - /url: /investigation
+      - link "Model Results" [ref=e23] [cursor=pointer]:
+        - /url: /model-results
+      - link "Replay" [ref=e26] [cursor=pointer]:
+        - /url: /replay
+    - generic [ref=e29]:
+      - generic [ref=e30]: System Online
+      - generic [ref=e32]: Model Ready
+  - generic [ref=e34]:
+    - banner [ref=e35]:
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - heading "Security Overview" [level=1] [ref=e38]
+          - paragraph [ref=e39]: Real-time network flow monitoring and ML-assisted threat detection
+        - generic [ref=e40]:
+          - button [ref=e42]
+          - generic [ref=e44]: System Online
+    - main [ref=e46]:
+      - generic [ref=e47]:
+        - heading "Overview" [level=1] [ref=e48]
+        - generic [ref=e49]:
+          - generic [ref=e50]:
+            - generic [ref=e51]: Test
+            - heading "Test" [level=3] [ref=e54]
+          - generic [ref=e55]: "123"
+        - generic [ref=e56]:
+          - heading "Glass panel" [level=2] [ref=e57]
+          - paragraph [ref=e58]: Content

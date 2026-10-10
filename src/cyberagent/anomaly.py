@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import os
 from pathlib import Path
-from typing: Tuple, Optional
+from typing import Tuple, Optional
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 import joblib

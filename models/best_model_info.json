@@ -1,0 +1,4 @@
+{
+  "best_model_name": "lightgbm",
+  "best_model_macro_f1": 0.9952733969112718
+}

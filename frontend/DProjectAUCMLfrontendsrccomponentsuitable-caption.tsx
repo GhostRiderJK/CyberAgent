@@ -1,0 +1,1 @@
+import * as React from "react";\n\nconst TableCaption = React.forwardRef<\n  HTMLElement,\n  React.HTMLAttributes<HTMLElement>\n>(({ className, children, ...props }, ref) => (\n  <caption\n    className={className}\n    ref={ref}\n    {...props}\n  >\n    {children}\n  </caption>\n));\nTableCaption.displayName = "TableCaption";\n\nexport default TableCaption;

@@ -6,12 +6,12 @@ import pandas as pd
 import numpy as np
 import os
 from pathlib import Path
-from typing: Tuple, Optional, Dict, Any, List
+from typing import Tuple, Optional, Dict, Any, List
 import shap
 from src.cyberagent.config import config
 from src.cyberagent.logging_setup import logger
 
-def explain_model(model, X_background: pd.DataFrame, X_to_explain: pd.DataFrame) -> shap.Explanation:
+def explain_model(model, X_background: pd.DataFrame, X_to_explain: pd.DataFrame):
     """
     Create a SHAP explainer and explain the model predictions.
 
@@ -21,7 +21,7 @@ def explain_model(model, X_background: pd.DataFrame, X_to_explain: pd.DataFrame)
         X_to_explain: Instances to explain
 
     Returns:
-        SHAP Explanation object
+        Tuple of (explainer, shap_values)
     """
     logger.info(f"Creating SHAP explainer for {type(model).__name__}")
 
@@ -44,9 +44,8 @@ def explain_model(model, X_background: pd.DataFrame, X_to_explain: pd.DataFrame)
     shap_values = explainer.shap_values(X_to_explain)
 
     # For multiclass, shap_values is a list of arrays (one per class)
-    # We'll return the explanation object for the predicted class
-    # But for simplicity, we return the raw shap_values and let the caller handle it
-    # We'll return the explainer and the shap_values
+    # For binary classification, shap_values is an array of shape (n_samples, n_features)
+    # We return the explainer and the raw shap_values; the caller can handle multiclass
     return explainer, shap_values
 
 def explain_instance(model, X_background: pd.DataFrame, instance: pd.DataFrame,
@@ -76,31 +75,52 @@ def explain_instance(model, X_background: pd.DataFrame, instance: pd.DataFrame,
         # Multiclass: shap_values is a list of arrays, one per class
         # Predict the class
         pred = model.predict(instance)
-        pred_class = pred[0] if isinstance(pred, np.ndarray) else pred
+        # If the model has a label_encoder_ attribute (as we added in train.py for XGBoost and LightGBM), use it
+        if hasattr(model, 'label_encoder_'):
+            pred_class = model.label_encoder_.inverse_transform(pred)[0] if isinstance(pred, np.ndarray) else model.label_encoder_.inverse_transform([pred])[0]
+        else:
+            pred_class = pred[0] if isinstance(pred, np.ndarray) else pred
         # Get the index of the predicted class
-        from sklearn.preprocessing import LabelEncoder
-        le = LabelEncoder()
-        # We need to fit the encoder on the model's classes
         # For tree-based models, we can get the classes from the model
         if hasattr(model, 'classes_'):
             classes = model.classes_
         else:
             # Fallback: use the unique values in the background data
-            classes = np.unique(X_background.iloc[:, 0])  # This is a hack, but we don't have the labels here
-            # Actually, we don't have the labels in X_background. We'll skip this for now.
-            # Instead, we'll return the shap_values for the first class and let the caller handle it.
-            # This is a limitation of this function.
-            # We'll return the shap_values for class 0.
+            # But note: we don't have the labels in X_background. We'll use the model's classes_ if available, else we cannot map.
+            # Since we have the label_encoder_ in the model for XGBoost and LightGBM, we should have classes_ as well.
+            # If not, we'll try to get the classes from the label_encoder_
+            if hasattr(model, 'label_encoder_'):
+                classes = model.label_encoder_.classes_
+            else:
+                # Last resort: use the unique values in the background data (but we don't have labels)
+                # This is a hack and may not be correct.
+                classes = np.unique(X_background.iloc[:, 0])  # This is a hack, but we don't have the labels here
+                # Actually, we don't have the labels in X_background. We'll skip this for now.
+                # Instead, we'll return the shap_values for the first class and let the caller handle it.
+                # This is a limitation of this function.
+                # We'll return the shap_values for class 0.
+                class_index = 0
+                shap_vals = shap_values[0][instance_index]
+                # Get feature names
+                feature_names = list(X_background.columns)
+                return shap_vals, feature_names
+        # Get the index of the predicted class
+        try:
+            class_index = list(classes).index(pred_class)
+        except ValueError:
+            # If the predicted class is not in the list of classes, use the first class
             class_index = 0
-        # For now, we'll return the shap_values for the first class and the feature names
-        # In a real implementation, we would map the class index to the class label.
-        shap_vals = shap_values[0][instance_index]
+        shap_vals = shap_values[class_index][instance_index]
     else:
         # Binary classification or regression
         shap_vals = shap_values[instance_index]
 
     # Get feature names
     feature_names = list(X_background.columns)
+
+    # Ensure shap_vals is 1D
+    if shap_vals.ndim > 1:
+        shap_vals = shap_vals.ravel()
 
     return shap_vals, feature_names
 
@@ -130,10 +150,17 @@ def explain_instance_top_features(model, X_background: pd.DataFrame, instance: p
     # Create list of feature contributions
     contributions = []
     for i, feature in enumerate(feature_names):
+        # Get the feature value for the instance at position i
+        if hasattr(feature_values, 'iloc'):
+            # pandas Series or DataFrame
+            value = float(feature_values.iloc[i]) if i < len(feature_values) else 0.0
+        else:
+            # numpy array or list
+            value = float(feature_values[i]) if i < len(feature_values) else 0.0
         contributions.append({
             'feature': feature,
             'shap_value': float(shap_vals[i]),
-            'value': float(feature_values[i]) if i < len(feature_values) else 0.0
+            'value': value
         })
 
     # Sort by absolute SHAP value

@@ -1,22 +1,26 @@
 import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import AppShell from './components/shared/AppShell';
+import Overview from './pages/Overview';
 import AlertsDashboard from './components/AlertsDashboard';
 import InvestigationView from './components/InvestigationView';
 import ModelResultsPage from './components/ModelResultsPage';
+import ReplayView from './components/ReplayView';
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-2xl font-bold mb-6">CyberAgent Dashboard</h1>
-      <div className="space-x-6">
-        <div className="w-1/3 space-y-4">
-          <AlertsDashboard />
-          <InvestigationView />
-        </div>
-        <div className="w-2/3 space-y-4">
-          <ModelResultsPage />
-        </div>
-      </div>
-    </div>
+    <BrowserRouter>
+      <AppShell>
+        <Routes>
+          <Route path="/" element={<Overview />} />
+          <Route path="/alerts" element={<AlertsDashboard />} />
+          <Route path="/investigation" element={<InvestigationView />} />
+          <Route path="/model-results" element={<ModelResultsPage />} />
+          <Route path="/replay" element={<ReplayView />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AppShell>
+    </BrowserRouter>
   );
 }
 

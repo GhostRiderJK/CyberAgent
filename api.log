@@ -1,0 +1,65 @@
+[1m[33mwarning[39m[0m[1m:[0m [1mNo `requires-python` value found in the workspace. Defaulting to `>=3.13`.[0m
+2026/10/09 03:27:12 INFO mlflow.agent.hint: Load the `instrumenting-with-mlflow-tracing` skill at D:\Project\AUCML\.venv\Lib\site-packages\mlflow\assistant\skills\instrumenting-with-mlflow-tracing\SKILL.md before writing any tracing code; it ships with this MLflow install. Set MLFLOW_DISABLE_AGENT_HINT=1 to silence this.
+INFO:     Started server process [47416]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:49696 - "GET /health HTTP/1.1" 200 OK
+2026-10-09 03:27:47,224 - cyberagent - INFO - Initializing data and model for investigation tools...
+2026-10-09 03:27:47,651 - cyberagent - INFO - Loaded preprocessed data: (389616, 80)
+2026-10-09 03:27:47,652 - cyberagent - INFO - Filtered to 40 selected features for model: (389616, 40)
+2026-10-09 03:27:47,671 - cyberagent - INFO - Loaded existing LightGBM model
+2026-10-09 03:27:47,671 - cyberagent - INFO - Initializing SHAP explainer...
+2026-10-09 03:27:47,671 - cyberagent - INFO - Creating SHAP explainer for LGBMClassifier
+2026-10-09 03:27:48,244 - cyberagent - INFO - SHAP explainer initialized
+INFO:     127.0.0.1:49713 - "GET /model/status HTTP/1.1" 200 OK
+2026-10-09 03:29:54,940 - cyberagent - INFO - Getting prediction probabilities for flow_id: 999999
+2026-10-09 03:29:54,942 - cyberagent - WARNING - Flow ID not found: 999999
+INFO:     127.0.0.1:65394 - "POST /predict HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:63324 - "POST /investigate HTTP/1.1" 200 OK
+2026-10-09 03:32:40,685 - cyberagent - INFO - Starting investigation for flow_id: 0
+2026-10-09 03:32:40,686 - cyberagent - INFO - Getting prediction probabilities for flow_id: 0
+2026-10-09 03:32:40,690 - cyberagent - INFO - Prediction for flow 0: BENIGN (confidence: 0.9896)
+2026-10-09 03:32:40,690 - cyberagent - INFO - Getting SHAP explanation for flow_id: 0
+2026-10-09 03:32:40,690 - cyberagent - INFO - Creating SHAP explainer for LGBMClassifier
+2026-10-09 03:32:41,225 - cyberagent - INFO - Getting prediction probabilities for flow_id: 0
+2026-10-09 03:32:41,228 - cyberagent - INFO - Prediction for flow 0: BENIGN (confidence: 0.9896)
+2026-10-09 03:32:41,228 - cyberagent - INFO - SHAP explanation generated for flow 0 with 10 top features
+2026-10-09 03:32:41,228 - cyberagent - INFO - Tool explain_flow returned result for flow 0
+2026-10-09 03:32:41,228 - cyberagent - INFO - Finding related flows for flow_id: 0
+2026-10-09 03:35:04,909 - cyberagent - INFO - Found 190385 related flows for flow 0
+2026-10-09 03:35:04,910 - cyberagent - INFO - Tool find_related_flows returned result for flow 0
+2026-10-09 03:35:04,910 - cyberagent - INFO - Investigation completed for flow 0 in 144.22s
+INFO:     127.0.0.1:65286 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65298 - "GET /model/status HTTP/1.1" 200 OK
+2026-10-09 04:01:06,297 - cyberagent - INFO - Getting prediction probabilities for flow_id: 0
+2026-10-09 04:01:06,423 - cyberagent - INFO - Prediction for flow 0: BENIGN (confidence: 0.9896)
+INFO:     127.0.0.1:54260 - "POST /predict HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54265 - "POST /investigate HTTP/1.1" 200 OK
+2026-10-09 04:01:17,421 - cyberagent - INFO - Starting investigation for flow_id: 0
+2026-10-09 04:01:17,421 - cyberagent - INFO - Getting prediction probabilities for flow_id: 0
+2026-10-09 04:01:17,424 - cyberagent - INFO - Prediction for flow 0: BENIGN (confidence: 0.9896)
+2026-10-09 04:01:17,425 - cyberagent - INFO - Getting SHAP explanation for flow_id: 0
+2026-10-09 04:01:17,427 - cyberagent - INFO - Creating SHAP explainer for LGBMClassifier
+2026-10-09 04:01:18,099 - cyberagent - INFO - Getting prediction probabilities for flow_id: 0
+2026-10-09 04:01:18,102 - cyberagent - INFO - Prediction for flow 0: BENIGN (confidence: 0.9896)
+2026-10-09 04:01:18,102 - cyberagent - INFO - SHAP explanation generated for flow 0 with 10 top features
+2026-10-09 04:01:18,102 - cyberagent - INFO - Tool explain_flow returned result for flow 0
+2026-10-09 04:01:18,102 - cyberagent - INFO - Finding related flows for flow_id: 0
+2026-10-09 04:03:48,972 - cyberagent - INFO - Found 190385 related flows for flow 0
+2026-10-09 04:03:48,972 - cyberagent - INFO - Tool find_related_flows returned result for flow 0
+2026-10-09 04:03:48,972 - cyberagent - INFO - Investigation completed for flow 0 in 151.55s
+INFO:     127.0.0.1:56160 - "POST /investigate HTTP/1.1" 200 OK
+2026-10-09 05:03:55,091 - cyberagent - INFO - Starting investigation for flow_id: 0
+2026-10-09 05:03:55,091 - cyberagent - INFO - Getting prediction probabilities for flow_id: 0
+2026-10-09 05:03:55,093 - cyberagent - INFO - Prediction for flow 0: BENIGN (confidence: 0.9896)
+2026-10-09 05:03:55,093 - cyberagent - INFO - Getting SHAP explanation for flow_id: 0
+2026-10-09 05:03:55,094 - cyberagent - INFO - Creating SHAP explainer for LGBMClassifier
+2026-10-09 05:03:55,589 - cyberagent - INFO - Getting prediction probabilities for flow_id: 0
+2026-10-09 05:03:55,592 - cyberagent - INFO - Prediction for flow 0: BENIGN (confidence: 0.9896)
+2026-10-09 05:03:55,592 - cyberagent - INFO - SHAP explanation generated for flow 0 with 10 top features
+2026-10-09 05:03:55,592 - cyberagent - INFO - Tool explain_flow returned result for flow 0
+2026-10-09 05:03:55,592 - cyberagent - INFO - Finding related flows for flow_id: 0
+2026-10-09 05:06:23,008 - cyberagent - INFO - Found 190385 related flows for flow 0
+2026-10-09 05:06:23,008 - cyberagent - INFO - Tool find_related_flows returned result for flow 0
+2026-10-09 05:06:23,008 - cyberagent - INFO - Investigation completed for flow 0 in 147.92s
