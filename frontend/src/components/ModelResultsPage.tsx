@@ -1,4 +1,5 @@
-import React from 'react';
+import * as React from "react";
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableRow, TableCaption } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -22,49 +23,71 @@ export default function ModelResultsPage() {
     precision: mockPRCurveData.portScan.precision[index]
   }));
 
+  // Combine data assuming same recall points for all classes (by index)
+  const combinedData = benignPRData.map((point, index) => ({
+    recall: point.recall,
+    benign: point.precision,
+    dosHulk: dosHulkPRData[index]?.precision ?? 0,
+    portScan: portScanPRData[index]?.precision ?? 0,
+  }));
+
   return (
     <div className="space-y-6">
       {/* Model Comparison Table */}
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Model Comparison</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-navy-200">Model Comparison</CardTitle>
+          <CardDescription className="text-navy-400">
             Comparison of different models trained on the dataset. The best model is highlighted.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="overflow-x-auto">
-            <Table>
-              <TableCaption>
-                Best model: {mockModelComparison.bestModel}
+            <Table className="w-full">
+              <TableCaption className="text-navy-400 mb-4">
+                Best model: <span className="font-semibold">{mockModelComparison.bestModel}</span>
               </TableCaption>
               <TableHead>
-                <TableRow>
-                  <TableCell>Model</TableCell>
-                  <TableCell>Accuracy</TableCell>
-                  <TableCell>Precision</TableCell>
-                  <TableCell>Recall</TableCell>
-                  <TableCell>F1 Score</TableCell>
-                  <TableCell>Macro F1</TableCell>
-                  <TableCell>Training Time (s)</TableCell>
-                  <TableCell>Inference Time per 1000 (ms)</TableCell>
+                <TableRow className="bg-navy-800 text-navy-50">
+                  <TableCell className="px-4 py-3">Model</TableCell>
+                  <TableCell className="px-4 py-3">Accuracy</TableCell>
+                  <TableCell className="px-4 py-3">Precision</TableCell>
+                  <TableCell className="px-4 py-3">Recall</TableCell>
+                  <TableCell className="px-4 py-3">F1 Score</TableCell>
+                  <TableCell className="px-4 py-3">Macro F1</TableCell>
+                  <TableCell className="px-4 py-3">Training Time (s)</TableCell>
+                  <TableCell className="px-4 py-3">Inference Time per 1000 (ms)</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {mockModelMetrics.map((metric, index) => {
                   const isBest = metric.model === mockModelComparison.bestModel;
                   return (
-                    <TableRow key={index} className={isBest ? 'bg-blue-50' : ''}>
-                      <TableCell className={isBest ? 'font-semibold' : ''}>
+                    <TableRow key={index} className={isBest ? 'bg-navy-700/50' : 'border-t border-navy-700/50'}>
+                      <TableCell className="px-4 py-3 font-medium {isBest ? 'text-navy-200' : 'text-navy-400'}">
                         {metric.model}
                       </TableCell>
-                      <TableCell>{(metric.accuracy * 100).toFixed(2)}%</TableCell>
-                      <TableCell>{(metric.precision * 100).toFixed(2)}%</TableCell>
-                      <TableCell>{(metric.recall * 100).toFixed(2)}%</TableCell>
-                      <TableCell>{(metric.f1 * 100).toFixed(2)}%</TableCell>
-                      <TableCell>{(metric.macroF1 * 100).toFixed(2)}%</TableCell>
-                      <TableCell>{metric.trainingTime.toFixed(2)}</TableCell>
-                      <TableCell>{metric.inferenceTimePer1000.toFixed(2)}</TableCell>
+                      <TableCell className="px-4 py-3 text-navy-400">
+                        {(metric.accuracy * 100).toFixed(2)}%
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-navy-400">
+                        {(metric.precision * 100).toFixed(2)}%
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-navy-400">
+                        {(metric.recall * 100).toFixed(2)}%
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-navy-400">
+                        {(metric.f1 * 100).toFixed(2)}%
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-navy-400">
+                        {(metric.macroF1 * 100).toFixed(2)}%
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-navy-400">
+                        {metric.trainingTime.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-navy-400">
+                        {metric.inferenceTimePer1000.toFixed(2)}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -77,28 +100,32 @@ export default function ModelResultsPage() {
       {/* Confusion Matrix */}
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Confusion Matrix (Best Model)</CardTitle>
+          <CardTitle className="text-navy-200">Confusion Matrix (Best Model)</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="overflow-x-auto">
-            <Table>
-              <TableCaption>
+            <Table className="w-full">
+              <TableCaption className="text-navy-400 mb-4">
                 Rows: Actual class, Columns: Predicted class
               </TableCaption>
               <TableHead>
-                <TableRow>
-                  <TableCell></TableCell>
+                <TableRow className="bg-navy-800 text-navy-50">
+                  <TableCell className="px-4 py-3">&nbsp;</TableCell>
                   {mockConfusionMatrix.labels.map((label, index) => (
-                    <TableCell key={index}>{label}</TableCell>
+                    <TableCell key={index} className="px-4 py-3 text-navy-400">{label}</TableCell>
                   ))}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {mockConfusionMatrix.matrix.map((row, rowIdx) => (
-                  <TableRow key={rowIdx}>
-                    <TableCell className="font-medium">{mockConfusionMatrix.labels[rowIdx]}</TableCell>
+                  <TableRow key={rowIdx} className="border-t border-navy-700/50 hover:bg-navy-800/50">
+                    <TableCell className="px-4 py-3 font-medium text-navy-400">
+                      {mockConfusionMatrix.labels[rowIdx]}
+                    </TableCell>
                     {row.map((val, colIdx) => (
-                      <TableCell key={colIdx}>{val}</TableCell>
+                      <TableCell key={colIdx} className="px-4 py-3 text-navy-400">
+                        {val}
+                      </TableCell>
                     ))}
                   </TableRow>
                 ))}
@@ -111,15 +138,12 @@ export default function ModelResultsPage() {
       {/* PR Curves */}
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Precision-Recall Curves</CardTitle>
-          <CardDescription>
-            Precision-Recall curves for selected classes (Benign, DoS Hulk, PortScan)
-          </CardDescription>
+          <CardTitle className="text-navy-200">Precision-Recall Curves</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={[]}>
-              <CartesianGrid strokeDasharray="3 3" />
+            <LineChart data={combinedData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#6366f1" />
               <XAxis
                 dataKey="recall"
                 label={{ position: 'insideBottom', offset: -10 }}
@@ -131,55 +155,37 @@ export default function ModelResultsPage() {
               />
               <Tooltip
                 labelFormatter={label => `${label}%`}
-                formatter={(value) => `${(value * 100).toFixed(2)}%`}
-                contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc', padding: '8px', borderRadius: '4px' }}
-              >
-                {(props) => {
-                  const { label: tooltipLabel } = props;
-                  return (
-                    <div className="tooltip-wrapper">
-                      {props.payload.map((payload, index) => {
-                        const { name, value } = payload;
-                        const color = ['#8884d8', '#82ca9d', '#ffc658'][index];
-                        return (
-                          <div key={index} className="flex items-center space-x-2 text-sm">
-                            <span className={`inline-flex h-2.5 w-2.5 rounded-full bg-${color}`} />
-                            <span>{name}: {(value * 100).toFixed(2)}%</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
+                formatter={(value) => {
+                  const num = typeof value === 'number' ? value : 0;
+                  return `${(num * 100).toFixed(2)}%`;
                 }}
-              </Tooltip>
-              <Legend verticalAlign="top" horizontalAlign="right" />
+                contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc', padding: '8px', borderRadius: '4px' }}
+              />
+              <Legend />
               {/* Benign PR Curve */}
               <Line
                 type="monotone"
-                dataKey="precision"
-                stroke="#8884d8"
+                dataKey="benign"
+                stroke="#6366f1"
                 name="Benign"
-                points={benignPRData}
               />
               {/* DoS Hulk PR Curve */}
               <Line
                 type="monotone"
-                dataKey="precision"
-                stroke="#82ca9d"
+                dataKey="dosHulk"
+                stroke="#10b981"
                 name="DoS Hulk"
-                points={dosHulkPRData}
               />
               {/* PortScan PR Curve */}
               <Line
                 type="monotone"
-                dataKey="precision"
-                stroke="#ffc658"
+                dataKey="portScan"
+                stroke="#f59e0b"
                 name="PortScan"
-                points={portScanPRData}
               />
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
       </Card>
     </div>
   );

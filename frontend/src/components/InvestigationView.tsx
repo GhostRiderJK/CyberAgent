@@ -62,9 +62,9 @@ export default function InvestigationView() {
       <Card className="w-full">
         <CardHeader>
           <CardTitle>Feature Explanation (SHAP Values)</CardTitle>
-          <CardCaption>
+          <CardDescription>
             Top features contributing to the prediction
-          </CardCaption>
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>

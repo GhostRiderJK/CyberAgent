@@ -1,54 +1,45 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableRow, TableCaption } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import SeverityBadge from '@/components/shared/SeverityBadge';
 import { mockAlerts } from '@/mocks/alerts';
-
-const severityToBadgeVariant: Record<string, 'default' | 'destructive' | 'outline' | 'secondary'> = {
-  low: 'secondary',
-  medium: 'outline',
-  high: 'destructive',
-  critical: 'destructive',
-};
 
 export default function AlertsDashboard() {
   return (
     <div className="space-y-6">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Network Flow Alerts</CardTitle>
+          <CardTitle className="text-navy-200">Network Flow Alerts</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="overflow-x-auto">
-            <Table>
-              <TableCaption>
+            <Table className="w-full">
+              <TableCaption className="text-navy-400">
                 Total alerts: {mockAlerts.length}
               </TableCaption>
               <TableHead>
-                <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Class</TableCell>
-                  <TableCell>Confidence</TableCell>
-                  <TableCell>Severity</TableCell>
-                  <TableCell>Source IP</TableCell>
-                  <TableCell>Timestamp</TableCell>
+                <TableRow className="bg-navy-800 text-navy-50">
+                  <TableCell className="px-4 py-2">ID</TableCell>
+                  <TableCell className="px-4 py-2">Classification</TableCell>
+                  <TableCell className="px-4 py-2">Confidence</TableCell>
+                  <TableCell className="px-4 py-2">Severity</TableCell>
+                  <TableCell className="px-4 py-2">Source IP</TableCell>
+                  <TableCell className="px-4 py-2">Timestamp</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {mockAlerts.map((alert) => (
-                  <TableRow key={alert.id}>
-                    <TableCell>{alert.id}</TableCell>
-                    <TableCell>{alert.class}</TableCell>
-                    <TableCell>
+                  <TableRow key={alert.id} className="border-t border-navy-700/50 hover:bg-navy-800/50">
+                    <TableCell className="px-4 py-2">{alert.id}</TableCell>
+                    <TableCell className="px-4 py-2">{alert.class}</TableCell>
+                    <TableCell className="px-4 py-2">
                       {(alert.confidence * 100).toFixed(1)}%
                     </TableCell>
-                    <TableCell>
-                      <Badge variant={severityToBadgeVariant[alert.severity]}>
-                        {alert.severity}
-                      </Badge>
+                    <TableCell className="px-4 py-2">
+                      <SeverityBadge severity={alert.severity} className="ml-2" />
                     </TableCell>
-                    <TableCell>{alert.sourceIp}</TableCell>
-                    <TableCell>{alert.timestamp}</TableCell>
+                    <TableCell className="px-4 py-2">{alert.sourceIp}</TableCell>
+                    <TableCell className="px-4 py-2">{alert.timestamp}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

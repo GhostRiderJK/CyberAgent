@@ -1,0 +1,71 @@
+feature,status,reason,kept_partner,mi_score
+Destination Port,kept,,,0.8368560927696524
+Protocol,kept,,,0.181838543495215
+Flow Duration,kept,,,0.9275112636714362
+Total Fwd Packets,kept,,,0.611452684164983
+Total Backward Packets,dropped,correlated,Total Fwd Packets,
+Total Length of Fwd Packets,kept,,,1.0260569228442662
+Total Length of Bwd Packets,dropped,correlated,Total Fwd Packets,
+Fwd Packet Length Max,kept,,,0.9675625311321616
+Fwd Packet Length Min,kept,,,0.34814897615970164
+Fwd Packet Length Mean,kept,,,0.8670197198827021
+Fwd Packet Length Std,dropped,correlated,Fwd Packet Length Max,
+Bwd Packet Length Max,kept,,,0.9445327086242039
+Bwd Packet Length Min,kept,,,0.4359432552563618
+Bwd Packet Length Mean,dropped,correlated,Bwd Packet Length Max,
+Bwd Packet Length Std,dropped,correlated,Bwd Packet Length Max,
+Flow Bytes/s,kept,,,0.8570051497738882
+Flow Packets/s,kept,,,0.8548674664936913
+Flow IAT Mean,kept,,,0.8424183527182454
+Flow IAT Std,kept,,,0.7917553085477915
+Flow IAT Max,kept,,,0.9512045702603453
+Flow IAT Min,kept,,,0.384923342914826
+Fwd IAT Total,dropped,correlated,Flow Duration,
+Fwd IAT Mean,kept,,,0.8853945941178445
+Fwd IAT Std,kept,,,0.7269270424279681
+Fwd IAT Max,dropped,correlated,Flow IAT Max,
+Fwd IAT Min,kept,,,0.48571298300310417
+Bwd IAT Total,kept,,,0.6350231193839837
+Bwd IAT Mean,kept,,,0.6131581022028578
+Bwd IAT Std,kept,,,0.5176236037942985
+Bwd IAT Max,kept,,,0.679453533919514
+Bwd IAT Min,kept,,,0.43331817552478324
+Fwd PSH Flags,dropped,low_mutual_information,,0.029993344619242635
+Fwd URG Flags,dropped,low_mutual_information,,0.0
+Fwd Header Length,dropped,correlated,Total Fwd Packets,
+Bwd Header Length,dropped,correlated,Total Fwd Packets,
+Fwd Packets/s,dropped,correlated,Flow Packets/s,
+Bwd Packets/s,kept,,,0.8401332967038717
+Min Packet Length,kept,,,0.35019146436601023
+Max Packet Length,dropped,correlated,Bwd Packet Length Max,
+Packet Length Mean,kept,,,1.131960128491413
+Packet Length Std,dropped,correlated,Bwd Packet Length Max,
+Packet Length Variance,kept,,,1.1121151041231863
+FIN Flag Count,kept,,,0.07051168736655011
+SYN Flag Count,dropped,correlated,Fwd PSH Flags,
+RST Flag Count,dropped,low_mutual_information,,0.00016376652811578296
+PSH Flag Count,kept,,,0.18235276916008925
+ACK Flag Count,kept,,,0.0804393231548941
+URG Flag Count,dropped,low_mutual_information,,0.037622365700077154
+CWE Flag Count,dropped,correlated,Fwd URG Flags,
+ECE Flag Count,dropped,correlated,RST Flag Count,
+Down/Up Ratio,kept,,,0.15892201512054616
+Average Packet Size,dropped,correlated,Packet Length Mean,
+Avg Fwd Segment Size,dropped,correlated,Fwd Packet Length Mean,
+Avg Bwd Segment Size,dropped,correlated,Bwd Packet Length Max,
+Subflow Fwd Packets,dropped,correlated,Total Fwd Packets,
+Subflow Fwd Bytes,dropped,correlated,Total Length of Fwd Packets,
+Subflow Bwd Packets,dropped,correlated,Total Fwd Packets,
+Subflow Bwd Bytes,dropped,correlated,Total Fwd Packets,
+Init_Win_bytes_forward,kept,,,0.9216006908745886
+Init_Win_bytes_backward,kept,,,0.9238185100456886
+act_data_pkt_fwd,dropped,correlated,Total Fwd Packets,
+min_seg_size_forward,kept,,,0.4573680368483175
+Active Mean,kept,,,0.4118628545652281
+Active Std,dropped,low_mutual_information,,0.05120893939277993
+Active Max,kept,,,0.40281370515390114
+Active Min,kept,,,0.40687950157472574
+Idle Mean,dropped,correlated,Flow IAT Max,
+Idle Std,kept,,,0.1054187383695866
+Idle Max,dropped,correlated,Flow IAT Max,
+Idle Min,kept,,,0.44575832544316785

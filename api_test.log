@@ -1,0 +1,8 @@
+[1m[33mwarning[39m[0m[1m:[0m [1mNo `requires-python` value found in the workspace. Defaulting to `>=3.13`.[0m
+2026/10/09 03:35:29 INFO mlflow.agent.hint: Load the `instrumenting-with-mlflow-tracing` skill at D:\Project\AUCML\.venv\Lib\site-packages\mlflow\assistant\skills\instrumenting-with-mlflow-tracing\SKILL.md before writing any tracing code; it ships with this MLflow install. Set MLFLOW_DISABLE_AGENT_HINT=1 to silence this.
+INFO:     Started server process [48548]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 10048] error while attempting to bind on address ('0.0.0.0', 8000): [winerror 10048] only one usage of each socket address (protocol/network address/port) is normally permitted
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.

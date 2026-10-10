@@ -16,6 +16,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 import lightgbm as lgb
 import xgboost as xgb
+from sklearn.preprocessing import LabelEncoder
 from src.cyberagent.config import config
 from src.cyberagent.logging_setup import logger
 import mlflow
@@ -73,6 +74,12 @@ def train_xgboost(X_train, y_train, X_val, y_val, class_weight=None) -> xgb.XGBC
     logger.info("Training XGBoost...")
     start_time = time.time()
 
+    # XGBoost requires numeric labels, so we encode the string labels
+    from sklearn.preprocessing import LabelEncoder
+    le = LabelEncoder()
+    y_train_enc = le.fit_transform(y_train)
+    y_val_enc = le.transform(y_val)
+
     # Convert class_weight to scale_pos_weight for binary, but we'll use it for multiclass via sample_weight
     # For simplicity, we'll not use class_weight directly in XGBoost for multiclass here
     model = xgb.XGBClassifier(
@@ -82,14 +89,16 @@ def train_xgboost(X_train, y_train, X_val, y_val, class_weight=None) -> xgb.XGBC
         eval_metric='mlogloss'
     )
     model.fit(
-        X_train, y_train,
-        eval_set=[(X_val, y_val)],
-        early_stopping_rounds=10,
+        X_train, y_train_enc,
+        eval_set=[(X_val, y_val_enc)],
         verbose=False
     )
+    # Store the label encoder for inverse transformation during evaluation
+    model.label_encoder_ = le
 
     # Validate
-    y_val_pred = model.predict(X_val)
+    y_val_pred_enc = model.predict(X_val)
+    y_val_pred = le.inverse_transform(y_val_pred_enc)
     val_f1 = f1_score(y_val, y_val_pred, average='macro')
     logger.info(f"XGBoost validation macro-F1: {val_f1:.4f}")
 
@@ -103,6 +112,16 @@ def train_lightgbm(X_train, y_train, X_val, y_val, class_weight=None) -> lgb.LGB
     logger.info("Training LightGBM...")
     start_time = time.time()
 
+    # LightGBM requires numeric labels, so we encode the string labels
+    from sklearn.preprocessing import LabelEncoder
+    le = LabelEncoder()
+    y_train_enc = le.fit_transform(y_train)
+    y_val_enc = le.transform(y_val)
+
+    # Convert class_weight dict from string labels to integer indices if provided
+    if class_weight is not None:
+        class_weight = {le.transform([cls])[0]: weight for cls, weight in class_weight.items()}
+
     model = lgb.LGBMClassifier(
         n_estimators=100,
         random_state=config.get("seed", 42),
@@ -111,13 +130,16 @@ def train_lightgbm(X_train, y_train, X_val, y_val, class_weight=None) -> lgb.LGB
         verbose=-1
     )
     model.fit(
-        X_train, y_train,
-        eval_set=[(X_val, y_val)],
-        eval_callback=[lgb.early_stopping(10), lgb.log_evaluation(10)]
+        X_train, y_train_enc,
+        eval_set=[(X_val, y_val_enc)],
+        callbacks=[lgb.early_stopping(100), lgb.log_evaluation(10)]
     )
+    # Store the label encoder for inverse transformation during evaluation
+    model.label_encoder_ = le
 
     # Validate
-    y_val_pred = model.predict(X_val)
+    y_val_pred_enc = model.predict(X_val)
+    y_val_pred = le.inverse_transform(y_val_pred_enc)
     val_f1 = f1_score(y_val, y_val_pred, average='macro')
     logger.info(f"LightGBM validation macro-F1: {val_f1:.4f}")
 
@@ -155,7 +177,12 @@ def evaluate_model(model, X_test, y_test, model_name: str) -> Dict[str, Any]:
     logger.info(f"Evaluating {model_name} on test set...")
 
     # Predict
-    y_test_pred = model.predict(X_test)
+    if hasattr(model, 'label_encoder_'):
+        # For models that require label encoding (like our modified XGBoost)
+        y_test_pred_enc = model.predict(X_test)
+        y_test_pred = model.label_encoder_.inverse_transform(y_test_pred_enc)
+    else:
+        y_test_pred = model.predict(X_test)
 
     # Calculate metrics
     accuracy = f1_score(y_test, y_test_pred, average='micro')  # Accuracy for classification
@@ -353,7 +380,7 @@ def main():
     logger.info(f"Data shapes - Train: {X_train.shape}, Val: {X_val.shape}, Test: {X_test.shape}")
 
     # Get class weights for imbalance handling
-    _, imbalance_info = data_dict['imbalance_info']
+    imbalance_info = data_dict['imbalance_info']
     class_weight_dict = imbalance_info.get('class_weight')
 
     # Train all models
