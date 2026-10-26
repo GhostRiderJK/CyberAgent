@@ -41,6 +41,25 @@ The LLM never labels traffic and never overrides the ML label; it only investiga
 
 ## Usage
 
+> **`make` is not installed on the development machine (Windows).** Each target below is listed with
+> the command it actually runs, so any step can be run without Make:
+>
+> | Target | Underlying command |
+> | --- | --- |
+> | `setup` | `uv sync`, then `cd frontend && npm install` |
+> | `reduce` | `uv run python -m scripts.reduce_dataset` |
+> | `preprocess` | `uv run python -m scripts.preprocess` |
+> | `train` | `uv run python -m scripts.train` |
+> | `tune` | `uv run python -m scripts.tune` (skipped by default: `tuning.enabled: false` in `config.yaml`) |
+> | `evaluate` | `uv run python -m scripts.evaluate` |
+> | `eval-json` | `uv run python scripts/build_evaluation_json.py` |
+> | `agent-eval` | `uv run python -m scripts.agent_eval` |
+> | `api` | `uv run python -m cyberagent.api` |
+> | `frontend` | `cd frontend && npm run dev` |
+> | `dev` | start `uv run python -m cyberagent.api`, then `cd frontend && npm run dev` in a second terminal |
+> | `test` | `uv run pytest -q`, plus `cd frontend && npm test` |
+> | `lint` | `uv run ruff check`, plus `cd frontend && npm run lint` |
+
 ### Data Preparation
 
 Place the dataset in `data/raw/` as described in the documentation.
