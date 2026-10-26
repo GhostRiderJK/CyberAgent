@@ -70,7 +70,7 @@ export const mockReplayFlows: ReplayFlow[] = [
   {
     timestamp: '2023-11-01 10:00:05',
     flowId: 1005,
-    prediction: 'Web Attack Brute Force',
+    prediction: 'Web Attack',
     confidence: 0.88,
     investigation: {
       verdict: 'MALICIOUS',

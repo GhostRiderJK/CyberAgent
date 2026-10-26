@@ -28,7 +28,7 @@ export const mockAlerts: Alert[] = [
   },
   {
     id: 3,
-    class: 'Web Attack Brute Force',
+    class: 'Web Attack',
     confidence: 0.92,
     severity: 'high',
     sourceIp: '172.16.0.25',

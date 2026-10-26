@@ -1,7 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableRow, TableCaption } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import ClassLabel from '@/components/shared/ClassLabel';
 import { mockReplaySession, mockReplayFlows, mockReplayStats } from '@/mocks/replay';
+import { flowIdLabel } from '@/lib/classLabels';
+import { formatConfidencePct } from '@/lib/format';
 
 export default function ReplayView() {
   const statusToBadgeVariant: Record<string, 'default' | 'destructive' | 'outline' | 'secondary'> = {
@@ -65,7 +68,7 @@ export default function ReplayView() {
             <div>
               <p className="text-sm font-medium text-muted-foreground">Avg Confidence</p>
               <p className="text-xl font-semibold">
-                {(mockReplayStats.avgConfidence * 100).toFixed(1)}%
+                {formatConfidencePct(mockReplayStats.avgConfidence)}
               </p>
             </div>
             <div>
@@ -105,12 +108,12 @@ export default function ReplayView() {
                 {mockReplayFlows.map((flow, index) => (
                   <TableRow key={index}>
                     <TableCell>{flow.timestamp}</TableCell>
-                    <TableCell>{flow.flowId}</TableCell>
+                    <TableCell className="mono">{flowIdLabel(flow.flowId)}</TableCell>
                     <TableCell>
-                      {flow.prediction}
+                      <ClassLabel name={flow.prediction} />
                     </TableCell>
                     <TableCell>
-                      {(flow.confidence * 100).toFixed(1)}%
+                      {formatConfidencePct(flow.confidence)}
                     </TableCell>
                     <TableCell>
                       {flow.investigation ? flow.investigation.verdict : 'N/A'}

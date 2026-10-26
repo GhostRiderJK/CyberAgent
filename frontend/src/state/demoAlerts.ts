@@ -8,7 +8,7 @@ import type { Host, SimResult } from '@/simulation/types';
  * Results.
  */
 const CLASS_BY_ACTION: Record<string, string> = {
-  exploit_vuln: 'Web Attack Brute Force',
+  exploit_vuln: 'Web Attack',
   exploit_local_vuln: 'DoS Hulk',
   credential_dump: 'Infiltration',
   lateral_move: 'Infiltration',

@@ -1,9 +1,10 @@
-import React from 'react';
 import { useLocation } from 'react-router-dom';
+import { useApiHealth } from '@/services/useApiHealth';
 
 export default function TopBar() {
   const location = useLocation();
   const [pathname] = location.pathname.split('?');
+  const apiHealth = useApiHealth();
 
   // Get the page title based on the path
   const getPageTitle = (path: string) => {
@@ -55,8 +56,12 @@ export default function TopBar() {
             </div>
           </div>
           <div className="flex items-center space-x-3">
-            <div className="h-2.5 w-2.5 bg-cyan-400 rounded-full" />
-            <span className="text-navy-100">API status unknown</span>
+            <div className={`h-2.5 w-2.5 rounded-full ${
+              apiHealth === 'online' ? 'bg-emerald-400' : apiHealth === 'unreachable' ? 'bg-red-400' : 'bg-slate-400'
+            }`} />
+            <span className="text-navy-100">
+              {apiHealth === 'online' ? 'API online' : apiHealth === 'unreachable' ? 'API unreachable' : 'API status: checking…'}
+            </span>
           </div>
         </div>
       </div>
