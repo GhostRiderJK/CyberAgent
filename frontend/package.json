@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "sync:eval": "node scripts/sync-eval.mjs",
+    "prebuild": "node scripts/sync-eval.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run"

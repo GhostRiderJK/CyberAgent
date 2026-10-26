@@ -8,6 +8,7 @@
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
     "moduleResolution": "bundler",
+    "resolveJsonModule": true,
     "baseUrl": "./",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
