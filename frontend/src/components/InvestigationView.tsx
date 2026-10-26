@@ -1,10 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, LabelList } from 'recharts';
 import { api } from '@/services/api';
 import type { InvestigationResult } from '@/models/apiModels';
 import { Table, TableBody, TableCell, TableHead, TableRow, TableCaption } from '@/components/ui/table';
+import ClassLabel from '@/components/shared/ClassLabel';
+import { flowIdLabel } from '@/lib/classLabels';
+import { formatConfidencePct } from '@/lib/format';
+import { buildShapPanel, isMissingFromRecord } from '@/lib/investigation';
 
 interface ToolCallEvent {
   tool: string;
@@ -15,12 +19,22 @@ interface ToolCallEvent {
 
 const DEFAULT_FLOW_ID = 0;
 
+/** Long CIC flow names need the width; the chart is horizontal. */
+const SHAP_LABEL_WIDTH = 240;
+
+/** recharts hands LabelList the raw value, which is NaN when the record lacks it. */
+function signedLabel(value: unknown): string {
+  return typeof value === 'number' && Number.isFinite(value) ? value.toFixed(3) : '—';
+}
+
 export default function InvestigationView() {
   const [flowId, setFlowId] = useState<number>(DEFAULT_FLOW_ID);
   const [result, setResult] = useState<InvestigationResult | null>(null);
   const [toolCalls, setToolCalls] = useState<ToolCallEvent[]>([]);
   const [status, setStatus] = useState<'idle' | 'running' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
+  /** The flow the displayed report belongs to - not the id still sitting in the input. */
+  const [ranFlowId, setRanFlowId] = useState<number | null>(null);
   const runIdRef = useRef(0);
 
   const severityToBadgeVariant: Record<string, 'default' | 'destructive' | 'outline' | 'secondary'> = {
@@ -34,6 +48,7 @@ export default function InvestigationView() {
   const runInvestigation = async (id: number) => {
     const runId = ++runIdRef.current;
     setResult(null);
+    setRanFlowId(null);
     setToolCalls([]);
     setError(null);
     setStatus('running');
@@ -42,6 +57,7 @@ export default function InvestigationView() {
       for await (const event of stream) {
         if (runId !== runIdRef.current) return; // stale run
         setResult(event);
+        setRanFlowId(id);
         setToolCalls(event.tool_call_events ?? []);
         setStatus('idle');
       }
@@ -57,18 +73,24 @@ export default function InvestigationView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const shapData = React.useMemo(() => {
-    const ev = result?.evidence.find((e) => e.source_tool === 'explain_flow');
-    if (!ev) return [];
-    try {
-      const parsed = JSON.parse(ev.source_value);
-      const names: string[] = parsed.feature_names ?? [];
-      const values: number[] = parsed.shap_values ?? [];
-      return names.map((feature, i) => ({ feature, value: values[i] ?? 0 }));
-    } catch {
-      return [];
+  const shapPanel = React.useMemo(
+    () => buildShapPanel(result?.shap_explanation, toolCalls.map((t) => t.tool)),
+    [result, toolCalls],
+  );
+  const shapChartHeight =
+    shapPanel.kind === 'chart' ? 48 * shapPanel.bars.length + 48 : 0;
+
+  // Connection identifiers come from the flow record (GET /flow data attached by the
+  // agent), never from the narrative - an ungrounded IP is the classic hallucination.
+  const flowRecord = result?.flow_record ?? null;
+  const recordCell = (field: 'source_ip' | 'source_port' | 'destination_ip' | 'destination_port' | 'protocol' | 'timestamp') => {
+    if (!flowRecord) return 'no flow record attached to this run';
+    const value = flowRecord[field];
+    if (value === null || value === undefined) {
+      return isMissingFromRecord(flowRecord, field) ? 'not in the record' : '—';
     }
-  }, [result]);
+    return String(value);
+  };
 
   return (
     <div className="space-y-6">
@@ -127,7 +149,7 @@ export default function InvestigationView() {
       {/* Report Summary */}
       <Card className="surface panel w-full">
         <CardHeader className="p-1">
-          <CardTitle>Investigation Report{result ? ` — flow ${flowId}` : ''}</CardTitle>
+          <CardTitle>Investigation Report{ranFlowId !== null ? ` — ${flowIdLabel(ranFlowId)}` : ''}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           {!result && status !== 'error' ? (
@@ -137,7 +159,9 @@ export default function InvestigationView() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Predicted Class</p>
-                  <p className="text-xl font-semibold">{result.predicted_class}</p>
+                  <p className="text-xl font-semibold">
+                    <ClassLabel name={result.predicted_class} with-dot />
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Severity</p>
@@ -146,7 +170,7 @@ export default function InvestigationView() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Confidence</p>
                   <p className="text-xl font-semibold">
-                    {(result.confidence * 100).toFixed(1)}%
+                    {formatConfidencePct(result.confidence)}
                   </p>
                 </div>
                 <div>
@@ -158,6 +182,11 @@ export default function InvestigationView() {
                   }`}>
                     {result.needs_human_review ? 'Yes' : 'No'}
                   </span>
+                  {result.needs_human_review && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Reason: {result.needs_human_review_reason ?? 'the review policy flagged this run; the backend did not say which rule.'}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">MITRE Technique</p>
@@ -172,6 +201,17 @@ export default function InvestigationView() {
                   }`}>
                     {result.grounding_check?.passed ? 'All claims grounded' : 'Ungrounded claims — review'}
                   </span>
+                  {result.grounding_check && !result.grounding_check.passed && (
+                    <ul className="mt-2 space-y-1 text-xs text-amber-300">
+                      {result.grounding_check.checks
+                        .filter((c) => !c.passed)
+                        .map((c) => (
+                          <li key={c.check}>
+                            <span className="font-medium">{c.check}</span>: {c.detail}
+                          </li>
+                        ))}
+                    </ul>
+                  )}
                 </div>
               </div>
               <div>
@@ -183,30 +223,81 @@ export default function InvestigationView() {
         </CardContent>
       </Card>
 
+      {/* Flow record — identifiers come from stored flow metadata, not the narrative */}
+      <Card className="surface panel w-full">
+        <CardHeader>
+          <CardTitle>Flow Record</CardTitle>
+          <CardDescription>
+            Read from the stored flow metadata by the deterministic tools. Values the
+            dataset does not keep are marked instead of guessed.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {result ? (
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:grid-cols-3">
+              {(
+                [
+                  ['Flow ID', flowRecord?.flow_id !== null && flowRecord?.flow_id !== undefined
+                    ? flowIdLabel(flowRecord.flow_id)
+                    : (ranFlowId !== null ? flowIdLabel(ranFlowId) : '—')],
+                  ['Source IP', recordCell('source_ip')],
+                  ['Source Port', recordCell('source_port')],
+                  ['Destination IP', recordCell('destination_ip')],
+                  ['Destination Port', recordCell('destination_port')],
+                  ['Protocol (as stored)', recordCell('protocol')],
+                  ['Timestamp', recordCell('timestamp')],
+                ] as const
+              ).map(([label, value]) => (
+                <div key={label}>
+                  <p className="text-xs text-muted-foreground">{label}</p>
+                  <p className="font-medium text-foreground">{value}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No flow record yet.</p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* SHAP Explanation Chart */}
       <Card className="surface panel w-full">
         <CardHeader>
           <CardTitle>Feature Explanation (SHAP Values)</CardTitle>
           <CardDescription>
-            Top features contributing to the prediction
+            Top {shapPanel.kind === 'chart' ? shapPanel.bars.length : 10} features by |SHAP|, signed.
+            Values are {shapPanel.kind === 'chart' ? shapPanel.valueScale : 'standardized'} —
+            the explained row is post-scaler, so these are z-scores, not raw packet counts.
+            Positive pushes toward {shapPanel.kind === 'chart' ? <ClassLabel name={result?.shap_explanation?.predicted_class ?? result?.predicted_class ?? ''} /> : 'the predicted class'}.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {shapData.length ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={shapData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="feature" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="value" fill="#8884d8" />
+          {shapPanel.kind === 'chart' ? (
+            <ResponsiveContainer width="100%" height={shapChartHeight}>
+              <BarChart data={shapPanel.bars} layout="vertical" margin={{ left: 8, right: 64 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                <XAxis type="number" />
+                <YAxis dataKey="feature" type="category" width={SHAP_LABEL_WIDTH} tick={{ fontSize: 11 }} interval={0} />
+                <Tooltip
+                  formatter={(value) => (typeof value === 'number' ? value.toFixed(4) : String(value))}
+                />
+                <ReferenceLine x={0} stroke="#64748b" />
+                <Bar dataKey="shap" isAnimationActive={false}>
+                  {shapPanel.bars.map((bar) => (
+                    <Cell key={bar.feature} fill={bar.shap >= 0 ? '#22c55e' : '#ef4444'} />
+                  ))}
+                  <LabelList
+                    dataKey="standardized"
+                    position="right"
+                    formatter={(value: unknown) => signedLabel(value)}
+                    fill="#94a3b8"
+                    fontSize={11}
+                  />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              No explanation data for this run.
-            </p>
+            <p className="text-sm text-muted-foreground">{shapPanel.reason}</p>
           )}
         </CardContent>
       </Card>
