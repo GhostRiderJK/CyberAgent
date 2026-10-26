@@ -5,6 +5,8 @@ export interface Alert {
   severity: 'low' | 'medium' | 'high' | 'critical';
   sourceIp: string;
   timestamp: string;
+  /** True for demo flows pushed from the Simulation page - never mixed with real fixtures. */
+  simulated?: boolean;
 }
 
 export const mockAlerts: Alert[] = [
