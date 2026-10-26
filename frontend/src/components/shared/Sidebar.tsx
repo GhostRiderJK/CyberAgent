@@ -69,6 +69,19 @@ export default function Sidebar() {
           Model Results
         </NavLink>
         <NavLink
+          to="/simulation"
+          end
+          className={({ isActive }) => `
+            flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors
+            ${isActive ? 'bg-navy-900 text-navy-100' : 'text-navy-300 hover:bg-navy-900/20 hover:text-navy-100'}
+          `}
+        >
+          <svg className="h-5 w-5 text-navy-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v3m0 12v3m9-9h-3M6 12H3m14.6-6.6l-2.1 2.1M9.5 14.5l-2.1 2.1m0-9.2l2.1 2.1m4.9 4.9l2.1 2.1"></path>
+          </svg>
+          Simulation
+        </NavLink>
+        <NavLink
           to="/replay"
           end
           className={({ isActive }) => `

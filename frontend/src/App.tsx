@@ -6,6 +6,7 @@ import AlertsDashboard from './components/AlertsDashboard';
 import InvestigationView from './components/InvestigationView';
 import ModelResultsPage from './components/ModelResultsPage';
 import ReplayView from './components/ReplayView';
+import SimulationPage from './pages/Simulation';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/alerts" element={<AlertsDashboard />} />
           <Route path="/investigation" element={<InvestigationView />} />
           <Route path="/model-results" element={<ModelResultsPage />} />
+          <Route path="/simulation" element={<SimulationPage />} />
           <Route path="/replay" element={<ReplayView />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

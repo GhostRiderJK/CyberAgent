@@ -16,6 +16,8 @@ export default function TopBar() {
         return 'Investigation';
       case '/model-results':
         return 'Model Results';
+      case '/simulation':
+        return 'Adversary Simulation';
       case '/replay':
         return 'Replay';
       default:
