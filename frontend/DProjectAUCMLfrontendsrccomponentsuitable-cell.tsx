@@ -1,1 +1,0 @@
-import * as React from "react";\n\nconst TableCell = React.forwardRef<\n  HTMLElement,\n  React.TdHTMLAttributes<HTMLElement>\n>(({ className, children, ...props }, ref) => (\n  <td\n    className={className}\n    ref={ref}\n    {...props}\n  >\n    {children}\n  </td>\n));\nTableCell.displayName = "TableCell";\n\nexport default TableCell;

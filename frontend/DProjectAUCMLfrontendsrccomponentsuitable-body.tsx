@@ -1,1 +1,0 @@
-import * as React from "react";\n\nconst TableBody = React.forwardRef<\n  HTMLElement,\n  React.HTMLAttributes<HTMLElement>\n>(({ className, children, ...props }, ref) => (\n  <tbody\n    className={className}\n    ref={ref}\n    {...props}\n  >\n    {children}\n  </tbody>\n));\nTableBody.displayName = "TableBody";\n\nexport default TableBody;
