@@ -124,6 +124,13 @@ cd frontend
 npm run dev
 ```
 
+Frontend unit tests (the simulation engine) and production build:
+```bash
+cd frontend
+npm test     # vitest run
+npm run build
+```
+
 ### Windows convenience scripts
 
 Double-click (or run) `start.bat` to launch the whole dev stack in two console
@@ -138,6 +145,35 @@ Start both API and frontend:
 ```bash
 make dev
 ```
+
+## Simulation page
+
+The `/simulation` page is a self-contained adversary war game: four attacker
+archetypes (opportunist, apt, ransomware, insider) and three defender roles
+(SOC analyst, incident responder, threat hunter) act on a fixed six-host,
+three-zone network (DMZ / INTERNAL / CRITICAL). It runs entirely in the
+browser - the FastAPI backend can be stopped, and the page still works.
+
+- `npm test` (in `frontend/`) runs the Vitest suite over the engine
+  (`src/simulation/`), which is pure TypeScript with no React or network calls.
+- **Determinism.** All randomness comes from a seeded mulberry32 PRNG
+  (`src/simulation/rng.ts`). The same seed + timesteps + network always
+  produces a byte-identical `SimulationResult`; the UI exposes both knobs.
+- **What you can do.** Run single or swarm mode (N followers per archetype
+  across M batch seeds) to get per-host compromise rates, top attack paths,
+  defense effectiveness, a vulnerability-priority ranking, and an honest
+  convergence note. The War-Game Replay card scrubs the timeline (derived from
+  the same step log via `foldSteps`, so it can never disagree with the results),
+  and the What-If card lets you toggle MFA/EDR/firewall/patched or remove a CVE
+  per host, then re-runs the *same seed* and prints before/after deltas.
+  "Send to Alerts as demo flows" pushes 3-6 tagged `Simulated` rows into the
+  Alerts table only - fixtures and Model Results stay untouched.
+- **Limitations (by design).** Agents are hand-written rule-based policies, not
+  trained RL models; probabilities are static heuristics modulated by defenses.
+  Nothing here observes real traffic - every screen carries a
+  "Simulated - not live traffic" badge - and CVE IDs are illustrative fixtures,
+  not verified advisories. Swarm aggregates are reported verbatim, including a
+  "not converged" flag when batch drift exceeds 5 percentage points.
 
 ## Results
 
