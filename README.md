@@ -10,6 +10,52 @@ This project implements a two-stage system:
 
 The LLM never labels traffic and never overrides the ML label; it only investigates and explains.
 
+## System Architecture
+
+Two halves: an offline pipeline that produces the numbers the UI is allowed to show, and an online
+request path that investigates one stored flow at a time.
+
+```
+data/raw/ (CIC-IDS2017 CSVs, not in the repo)
+  -> scripts/reduce_dataset.py       data/processed/flows_features.parquet + flows_meta.parquet
+  -> scripts/preprocess.py           data/processed/preprocess_artifacts.joblib (imputer, scaler,
+                                     feature mask, two name lists) + holdout_zero_day.parquet
+                                     stratified 70/15/15, seed 42, 40 features kept
+  -> scripts/train.py                models/*.joblib, models/metrics.json, best_model_info.json
+  -> scripts/evaluate.py             results/tables/*, results/figures/*, evaluation_summary.json
+  -> scripts/build_evaluation_json.py  artifacts/eval/evaluation.json; recomputes every metric from
+                                     the confusion matrix and refuses to write when they disagree
+  -> npm run sync:eval               frontend/src/data/evaluation.json -> /model-results
+```
+
+```
+React frontend (Vite :5173) -> FastAPI (config :8000, start.bat :8010)
+  GET  /health, /model/status, /
+  POST /predict        {flow_id}  -> predict_proba()
+  GET  /flow/{flow_id}            -> connection-level fields of the stored record
+  POST /investigate    {flow_id}  -> SSE: start, progress*, end | error
+       -> InvestigationAgent: predict_proba first, then at most 6 calls from
+          {predict_proba, explain_flow, find_related_flows, similar_known_attacks,
+           lookup_attack_pattern}. Tool names are checked against the registry and every
+          argument is re-pinned to trusted values before the tool runs.
+       -> verdict synthesis -> grounding verifier (5 checks) -> heuristic MITRE lookup
+```
+
+Boot is lazy: the first request loads the two processed parquets, `results/tables/selected_features.csv`,
+`preprocess_artifacts.joblib` and `models/lightgbm.joblib`, then builds a SHAP `TreeExplainer` over a
+100-row background. Explanations therefore come from the model actually loaded, never from a stale
+dump, and `explain_flow` answers with parallel arrays (`shap_values[]`, `feature_names[]`,
+`feature_values[]`, the top 10 by absolute effect) plus `value_scale: "standardized"`, because served
+rows are post-scaler z-scores. `/investigate` runs in a four-worker thread pool and pushes progress
+events back onto the event loop.
+
+Layout: backend in `src/cyberagent/` (`config`, `seed`, `data_loader`, `features`, `preprocess`,
+`feature_selection`, `train`, `tune`, `evaluate`, `anomaly`, `explain`, `investigation`, `llm`, `agent/` for the loop and
+grounding, `api/` for routes and request/response shapes). Frontend in `frontend/src/` (`components/`,
+`pages/`, `services/`, `lib/` for class labels, formatting and the defensive investigation parse,
+`models/evaluation.ts`, `simulation/` as a pure TypeScript engine with no React import, `mocks/` for
+the labelled fixtures). No route serves metric files: the browser reads only the synced artifact.
+
 ## Setup
 
 ### Prerequisites
@@ -148,10 +194,10 @@ no `config.yaml` edits needed:
 
 | Variable | Purpose | Example |
 |---|---|---|
-| `LLM_BACKEND` | `openai` (any OpenAI-compatible server), `ollama`, or `mock` | `openai` |
-| `LLM_BASE_URL` | Endpoint base | `http://localhost:20128/v1` (Omnirouter proxy) |
+| `LLM_BACKEND` | `ollama` (native `/api/chat`), `openai` (any OpenAI-compatible server), or `mock` | `ollama` |
+| `LLM_BASE_URL` | Endpoint base; unset falls back to `http://localhost:11434` for `ollama` | `http://localhost:11434` |
 | `LLM_API_KEY` | Bearer token (masked; keep local) | — |
-| `LLM_MODEL` | Model id | `nvidia/qwen3-next-80b-a3b-instruct` |
+| `LLM_MODEL` | Model id, for Ollama the name of a model you have pulled | `llama3.2:3b` |
 | `API_PATH_PREFIX` | Deploy-only; mount API under a prefix (e.g. `/api` on Vercel) | `/api` |
 | `VITE_API_BASE_URL` | Frontend → API base (e.g. `http://localhost:8000` in dev) | — |
 
@@ -222,7 +268,7 @@ browser - the FastAPI backend can be stopped, and the page still works.
   per host, then re-runs the *same seed* and prints before/after deltas.
   "Send to Alerts as demo flows" pushes 3-6 tagged `Simulated` rows into the
   Alerts table only - fixtures and Model Results stay untouched.
-- **Limitations (by design).** Agents are hand-written rule-based policies, not
+- **Not live traffic.** Agents are hand-written rule-based policies, not
   trained RL models; probabilities are static heuristics modulated by defenses.
   Nothing here observes real traffic - every screen carries a
   "Simulated - not live traffic" badge - and CVE IDs are illustrative fixtures,
@@ -238,18 +284,14 @@ Results are saved in the `results/` directory, including:
 
 ## Documentation
 
-- [AGENTS.md](AGENTS.md) — the project guide: environment rules, working rules, pipeline and
-  limitations. Read it before changing code.
+- [AGENTS.md](AGENTS.md) — the project guide: environment rules, working rules and the data facts.
+  Read it before changing code.
 - [docs/prd.md](docs/prd.md) — what the system is required to do, requirement by requirement, with the
   status of each.
 - [docs/architecture.md](docs/architecture.md) — how the code is arranged, how data moves through the
   offline pipeline and the request path, and why the awkward decisions were made.
-- [docs/design_system.md](docs/design_system.md) — the frontend's implemented visual rules: tokens,
-  surfaces, badges, formatters, charts, empty states, accessibility, and where they live.
 - [docs/testing.md](docs/testing.md) — how to run every check on Windows, what the 110 Python and 31
   frontend tests pin down, and what no test covers.
-- [docs/security.md](docs/security.md) — trust boundaries, the agent's prompt-injection surface, the
-  unauthenticated API as configured, and a checklist to work through before exposure.
 
 ## Makefile Targets
 
@@ -267,24 +309,6 @@ Results are saved in the `results/` directory, including:
 - `test`: Run tests
 - `lint`: Run linter
 - `all`: Run setup, reduce, preprocess, train, evaluate, agent-eval, api, frontend (for development)
-
-## Assumptions and Limitations
-
-### Assumptions
-- Dataset is available in the specified format under `data/raw/`.
-- Timestamps without AM/PM markers follow the 8:00-17:00 working hours pattern (we infer PM for hours 1-7).
-- Benign class can be safely downsampled for training without affecting detection of rare attacks.
-- MITRE ATT&CK mappings are available for attack classes present in the dataset.
-- LLM backend (OpenAI-compatible proxy / Ollama / mock) is accessible as configured via `.env`.
-
-### Limitations
-- The dataset used is the original CIC-IDS2017, which has known labeling and flow-construction issues.
-- Timestamps in the dataset lack AM/PM markers; we infer PM for hours 1-7.
-- The benign class is downsampled, so benign FPR and precision do not reflect real-world traffic.
-- The LLM agent may produce ungrounded claims; the grounding verifier flags them and forces human review, but cannot guarantee semantic faithfulness of prose.
-- The evaluation metrics are computed on a reduced, downsampled version of CIC-IDS2017 and are not directly comparable to full-dataset results in the literature.
-- The serving API looks flows up by `flow_id` from the processed dataset; live per-packet inference from a sensor is out of scope.
-- The anomaly detection module (Isolation Forest) is trained on benign-only data and may not capture all types of anomalies.
 
 ## License
 

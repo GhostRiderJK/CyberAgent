@@ -3,17 +3,17 @@ LLM client for CyberAgent, configured entirely through environment variables
 (.env / shell), so keys and endpoints can be changed without touching config.yaml.
 
 Backends (LLM_BACKEND):
-  openai  - any OpenAI-compatible /v1/chat/completions server
-            (Omnirouter proxy, vLLM, LM Studio, OpenAI itself, ...)
   ollama  - native Ollama /api/chat endpoint
+  openai  - any OpenAI-compatible /v1/chat/completions server
+            (vLLM, LM Studio, OpenAI itself, ...)
   mock    - deterministic offline stub (default; keeps tests running)
 
 Environment variables:
-  LLM_BACKEND   = openai | ollama | mock
-  LLM_BASE_URL  = e.g. http://localhost:20128/v1  (openai)
-                  or http://localhost:11434       (ollama)
-  LLM_API_KEY   = bearer token for the endpoint (masked; local proxy only)
-  LLM_MODEL     = model id, e.g. nvidia/qwen3-next-80b-a3b-instruct
+  LLM_BACKEND   = ollama | openai | mock
+  LLM_BASE_URL  = e.g. http://localhost:11434       (ollama, also the default)
+                  or http://<host>:<port>/v1        (openai)
+  LLM_API_KEY   = bearer token for the endpoint (masked; keep local)
+  LLM_MODEL     = model id, for ollama the name of a pulled model
   LLM_TEMPERATURE, LLM_MAX_TOKENS, LLM_TIMEOUT_S
 """
 import json

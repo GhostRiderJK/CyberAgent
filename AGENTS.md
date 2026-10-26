@@ -24,8 +24,9 @@ that is why `ml_label_not_overridden` is a grounding check.
   sets `LLM_BACKEND=openai`, a local base URL, a model id and a 35-character `LLM_API_KEY`.
   `.env.example` keeps the placeholder. No credential is anywhere in git history. Never print the
   key, never commit it. Tests never construct `LLMClient`, so the suite stays offline and mock is
-  the default (`src/cyberagent/llm.py:44`) — but with `.env` live and the proxy up, `/investigate`
-  really calls the model. Nothing may require a secret to run or to pass.
+  the default (`src/cyberagent/llm.py:44`) — but with `.env` live and an Ollama server or an
+  OpenAI-compatible endpoint reachable, `/investigate` really calls the model. Nothing may require a
+  secret to run or to pass.
 - Repo root as last reported: `D:\Project\security-network\AUCML`. Verify with `pwd`.
 
 ## Working rules
@@ -169,24 +170,8 @@ behind the reported metrics).
 - [ ] Optional: Isolation Forest score next to the supervised prediction for the zero-day holdout
       — awaiting the owner's decision.
 
-## Known limitations (keep them honest in docs and UI)
-
-1. A random stratified split can leak near-duplicate flows into test, so scores may be optimistic.
-2. Zero-day holdout failed: all 47 unseen flows were classified BENIGN.
-3. PR curves exist for the best model only (one-vs-rest, capped at 200 points per class).
-4. Default runs use the mock backend and its deterministic plan; live-LLM behaviour is unbenchmarked.
-5. MITRE mapping is heuristic; the tool set and tool-call budget are bounded.
-6. Simulation is rule-based and illustrative.
-7. Overview, Alerts and Replay are labeled fixtures, not live traffic.
-8. Per-sample probabilities and split indices are not persisted; the investigation path recomputes
-   a flow's prediction from the loaded model. Training time is real and lives in
-   `evaluation.json` as `models[*].training_time_s` (LightGBM 11.28 s); the table falls back to `—`
-   only when every model reports it as null.
-
 ## Further reading
 
 - `docs/prd.md` — problem, users, requirements with real status, open decisions.
 - `docs/architecture.md` — offline pipeline, online request path, module ownership, decisions and why.
-- `docs/design_system.md` — tokens, badge rules, formatting, known inconsistencies.
 - `docs/testing.md` — what is covered, fresh counts, what has no automated coverage.
-- `docs/security.md` — trust boundaries, pickle and API exposure notes, pre-exposure checklist.

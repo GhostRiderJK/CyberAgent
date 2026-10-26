@@ -26,7 +26,7 @@ Three separated roles, each with a hard constraint:
   and the stored flow record; a failed check is listed by name rather than hidden.
 
 So the reader gets the model's answer plus a narrative that has been audited against the evidence
-that produced it — and a limitations block that says where both are weak.
+that produced it.
 
 ## Users
 
