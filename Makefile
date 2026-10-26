@@ -1,7 +1,7 @@
 # CyberAgent Makefile
 # Mirrors the functionality of scripts/tasks.py
 
-.PHONY: setup reduce preprocess train tune evaluate agent-eval api frontend dev test lint all help
+.PHONY: setup reduce preprocess train tune evaluate eval-json agent-eval api frontend dev test lint all help
 
 # Default target
 help:
@@ -16,6 +16,7 @@ help:
 	@echo "  train	     Train models"
 	@echo "  tune	     Run hyperparameter tuning"
 	@echo "  evaluate     Evaluate models"
+	@echo "  eval-json    Build artifacts/eval/evaluation.json (frontend's only metrics source)"
 	@echo "  agent-eval   Evaluate agent"
 	@echo "  api	     Start the API server"
 	@echo "  frontend     Start the frontend development server"
@@ -50,6 +51,9 @@ tune:
 evaluate:
 	uv run python -m scripts.evaluate
 
+eval-json:
+	uv run python scripts/build_evaluation_json.py
+
 agent-eval:
 	uv run python -m scripts.agent_eval
 
@@ -71,7 +75,7 @@ test:
 lint:
 	uv run ruff check
 
-all: setup reduce preprocess train tune evaluate agent-eval
+all: setup reduce preprocess train tune evaluate eval-json agent-eval
 	@echo "Pipeline completed. To start API and frontend, run:"
 	@echo "  make api"
 	@echo "  make frontend"
