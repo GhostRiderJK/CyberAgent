@@ -1,0 +1,10 @@
+{
+  "n_flows": 33,
+  "sample_per_class": 3,
+  "ml_label_fidelity": 1.0,
+  "grounding_pass_rate": 1.0,
+  "schema_validity": 1.0,
+  "low_confidence_review_rate": null,
+  "max_tool_calls_used": 5,
+  "llm_backend": "configured"
+}
