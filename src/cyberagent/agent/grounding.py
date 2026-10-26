@@ -10,15 +10,21 @@ produced by the deterministic tools. The verifier enforces:
   3. Every number in the narrative appears somewhere in the structured
      evidence (counts, confidences, ports, timings) - tolerance-matched.
   4. The narrative only references tools that were actually called.
+  5. Any IP address the narrative quotes is present in the evidence or in
+     the stored flow record - an invented endpoint is the most damaging
+     kind of hallucination in a SOC report.
 
 Failed checks are listed in the result's `grounding_check` so a human
 analyst sees exactly which claim could not be grounded.
 """
+import json
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 # Numbers like 0.98, 445, 1,234, 30 (min), 12.5%
 _NUM_RE = re.compile(r"\d+(?:[.,]\d+)?%?")
+# IPv4 literals quoted in prose, e.g. "traffic from 172.16.0.1 to 192.168.10.50"
+_IPV4_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
 # Tool references in prose, e.g. "explain_flow showed..."
 _TOOL_REF_RE = re.compile(r"\b(predict_proba|explain_flow|find_related_flows|similar_known_attacks|lookup_attack_pattern)\b")
 
@@ -58,6 +64,7 @@ def verify_grounding(
     ml_result: Dict[str, Any],
     evidence_store: Dict[str, Any],
     tools_called: List[str],
+    known_identifiers: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
     Run all grounding checks; return {'passed': bool, 'checks': [...], 'ungrounded_numbers': [...]}.
@@ -108,6 +115,19 @@ def verify_grounding(
         "check": "tool_references_valid",
         "passed": len(bogus_refs) == 0,
         "detail": f"References to tools never called: {bogus_refs}" if bogus_refs else "All tool references valid",
+    })
+
+    # IPs are grounded against the raw evidence text plus the stored flow record, so a
+    # quoted endpoint that no tool ever returned is reported rather than trusted.
+    haystack = json.dumps(evidence_store, default=str) + " " + " ".join(known_identifiers or [])
+    cited_ips = sorted({ip for ip in _IPV4_RE.findall(narrative or "") if ip not in ("0.0.0.0",)})
+    ungrounded_ips = [ip for ip in cited_ips if ip not in haystack]
+    checks.append({
+        "check": "identifiers_grounded",
+        "passed": len(ungrounded_ips) == 0,
+        "detail": (f"IP addresses not found in any evidence: {ungrounded_ips}" if ungrounded_ips
+                   else (f"All {len(cited_ips)} quoted endpoint(s) appear in the evidence" if cited_ips
+                         else "No endpoint addresses claimed")),
     })
 
     return {

@@ -126,33 +126,15 @@ async def predict(request: models.PredictRequest):
 # Flow metadata endpoint
 @app.get("/flow/{flow_id}", response_model=models.FlowMetadataResponse)
 async def get_flow_metadata(flow_id: int):
-    try:
-        _initialize_data_and_model()
-        # Use the module reference to get the updated _metadata_df
-        metadata_df = investigation_module._metadata_df
-        if metadata_df is None:
-            raise RuntimeError("Metadata not initialized")
-        # Find the row with matching flow_id
-        mask = metadata_df['flow_id'] == flow_id
-        if not mask.any():
-            raise ValueError(f"Flow ID {flow_id} not found in dataset")
-        row = metadata_df.iloc[mask.index[0]]
-        # Extract the required fields
-        return models.FlowMetadataResponse(
-            flow_id=int(row['flow_id']),
-            source_ip=str(row.get('Source IP', '')),
-            source_port=int(row.get('Source Port', 0)) if pd.notna(row.get('Source Port')) else None,
-            destination_ip=str(row.get('Destination IP', '')),
-            destination_port=int(row.get('Destination Port', 0)) if pd.notna(row.get('Destination Port')) else None,
-            protocol=str(row.get('Protocol', '')),
-            timestamp=row.get('Timestamp') if pd.notna(row.get('Timestamp')) else None
-        )
-    except ValueError as e:
-        logger.warning(f"Flow ID not found: {flow_id}")
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        logger.error(f"Error retrieving flow metadata: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+    record = investigation_module.get_flow_record(flow_id)
+    if not record['available']:
+        logger.warning(f"Flow {flow_id}: {record.get('reason')}")
+        raise HTTPException(status_code=404, detail=record.get('reason', 'Flow not found'))
+    return models.FlowMetadataResponse(**{
+        k: record[k] for k in ('flow_id', 'source_ip', 'source_port', 'destination_ip',
+                               'destination_port', 'protocol', 'timestamp', 'missing_fields',
+                               'available')
+    })
 
 # Investigation endpoint with SSE support
 @app.post("/investigate")

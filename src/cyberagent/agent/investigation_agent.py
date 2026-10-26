@@ -14,7 +14,8 @@ from cyberagent.investigation import (
     explain_flow,
     find_related_flows,
     similar_known_attacks,
-    lookup_attack_pattern
+    lookup_attack_pattern,
+    get_flow_record
 )
 from cyberagent.logging_setup import logger
 from cyberagent.llm import get_llm, LLMError
@@ -296,7 +297,7 @@ class InvestigationAgent:
         severity = self._determine_severity(predicted_class, confidence)
 
         # Determine if human review is needed
-        needs_human_review = self._determine_needs_human_review(predicted_class, confidence)
+        needs_human_review, review_reason = self._determine_needs_human_review(predicted_class, confidence)
 
         # Collect evidence from tool calls
         evidence = self._collect_evidence()
@@ -319,6 +320,11 @@ class InvestigationAgent:
              "detail": "No LLM backend: verdict built from deterministic tool evidence only"}
         ], "ungrounded_numbers": []}
 
+        flow_record = get_flow_record(flow_id)
+        known_identifiers = [flow_record[k] for k in
+                             ('source_ip', 'destination_ip', 'source_port', 'destination_port')
+                             if flow_record.get(k) is not None]
+
         report = self._narrative_from_llm(ml_pred)
         if report:
             narrative = str(report.get('summary', ''))
@@ -329,6 +335,7 @@ class InvestigationAgent:
                 ml_result=ml_pred,
                 evidence_store=dict(self.investigation_results),
                 tools_called=[c['tool'] for c in self.tool_call_history],
+                known_identifiers=[str(i) for i in known_identifiers],
             )
             if narrative:
                 verdict = f"{verdict} | Analyst report: {narrative}"
@@ -340,6 +347,7 @@ class InvestigationAgent:
                 needs_human_review = True
                 bad = [c['detail'] for c in grounding['checks'] if not c['passed']]
                 limitations.append(f"Grounding verifier failed: {'; '.join(bad)}")
+                review_reason = '; '.join(filter(None, [review_reason, 'grounding verifier failed']))
 
         result = {
             'verdict': verdict,
@@ -347,11 +355,14 @@ class InvestigationAgent:
             'severity': severity,
             'confidence': confidence,
             'needs_human_review': needs_human_review,
+            'needs_human_review_reason': review_reason,
             'evidence': evidence,
             'mitre_technique': mitre_technique,
             'recommended_actions': recommended_actions,
             'limitations': limitations,
             'grounding_check': grounding,
+            'shap_explanation': self._shap_explanation(),
+            'flow_record': flow_record,
             'tool_call_events': self.get_tool_call_events()
         }
 
@@ -385,19 +396,22 @@ class InvestigationAgent:
                 return 'Low'
         return base_severity
 
-    def _determine_needs_human_review(self, predicted_class: str, confidence: float) -> bool:
-        """Determine if human review is needed."""
-        # Always review if confidence is low
+    def _determine_needs_human_review(self, predicted_class: str, confidence: float) -> Tuple[bool, str]:
+        """Return (needs_review, why).
+
+        The reason is part of the result because "review required" at 100% confidence
+        looks like a contradiction unless the analyst can see which rule fired.
+        """
         if confidence < 0.6:
-            return True
-        # Review for certain high-impact classes regardless of confidence
+            return True, f"low model confidence ({confidence:.2f})"
         high_impact = ['Bot', 'DDoS', 'Infiltration', 'Heartbleed', 'Web Attack']
         if predicted_class in high_impact:
-            return True
-        # Review if we had tool call errors or incomplete information
-        if len(self.tool_call_history) < 2:  # We didn't get to run enough tools
-            return True
-        return False
+            return True, (f"'{predicted_class}' is a high-impact class: reviewed by a human "
+                          "whatever the confidence")
+        if len(self.tool_call_history) < 2:
+            return True, (f"only {len(self.tool_call_history)} evidence tool call(s) completed, "
+                          "below the 2 required for an automatic decision")
+        return False, ""
 
     def _collect_evidence(self) -> List[Dict[str, Any]]:
         """Collect evidence from tool calls for the final verdict."""
@@ -408,9 +422,12 @@ class InvestigationAgent:
             result = call['result']
 
             if tool_name == 'predict_proba':
+                # Two-decimal percent, the same form the report header uses: "1.000"
+                # in the evidence row read like a certainty the model never claimed.
                 evidence.append({
                     'source_tool': 'predict_proba',
-                    'source_value': f"Predicted class: {result.get('predicted_class')} with confidence {result.get('confidence'):.3f}"
+                    'source_value': f"Predicted class: {result.get('predicted_class')} "
+                                    f"with confidence {result.get('confidence') * 100:.2f}%"
                 })
             elif tool_name == 'explain_flow':
                 # Extract top features from explanation
@@ -434,13 +451,37 @@ class InvestigationAgent:
                     'source_value': f"Found {count} similar known attacks"
                 })
             elif tool_name == 'lookup_attack_pattern':
-                desc = result.get('description', 'No description')
+                # The tool's description already carries its own label; prefixing it here
+                # is what produced "Attack pattern: Attack pattern: ...".
                 evidence.append({
                     'source_tool': 'lookup_attack_pattern',
-                    'source_value': f"Attack pattern: {desc}"
+                    'source_value': result.get('description', 'No description')
                 })
 
         return evidence
+
+    def _shap_explanation(self) -> Optional[Dict[str, Any]]:
+        """Structured SHAP output of explain_flow, for the UI's explanation panel.
+
+        Prose in the evidence table is for humans reading a list; a chart needs the
+        arrays, and reading them from the tool result (not from the narrative) is what
+        keeps the plotted values grounded.
+        """
+        explanation = self.investigation_results.get('explain_flow')
+        if not isinstance(explanation, dict):
+            return None
+        features = [
+            {'feature': name, 'shap_value': shap, 'standardized_value': value}
+            for name, shap, value in zip(explanation.get('feature_names', []),
+                                         explanation.get('shap_values', []),
+                                         explanation.get('feature_values', []))
+        ]
+        return {
+            'predicted_class': explanation.get('predicted_class'),
+            'value_scale': explanation.get('value_scale', 'standardized'),
+            'features': features,
+            'explanation_error': explanation.get('explanation_error'),
+        }
 
     def _determine_mitre_technique(self, predicted_class: str) -> str:
         """Determine MITRE technique based on predicted class."""

@@ -94,3 +94,51 @@ def test_fake_tool_reference_flagged():
     )
     failed2 = {c["check"] for c in result2["checks"] if not c["passed"]}
     assert "tool_references_valid" in failed2
+
+
+def test_invented_endpoint_flagged():
+    # A SOC narrative that names an IP no tool returned must never pass grounding.
+    result = verify_grounding(
+        narrative="DDoS flood originated from 203.0.113.66 toward the server.",
+        llm_predicted_class="DDoS",
+        llm_confidence=0.92,
+        ml_result=ML_RESULT,
+        evidence_store=EVIDENCE,
+        tools_called=TOOLS,
+    )
+    failed = {c["check"]: c for c in result["checks"] if not c["passed"]}
+    assert "identifiers_grounded" in failed
+    assert "203.0.113.66" in failed["identifiers_grounded"]["detail"]
+    assert result["passed"] is False
+
+
+def test_endpoint_from_the_flow_record_is_grounded():
+    # The flow record is attached separately from the tool evidence, so the agent
+    # passes its identifiers in; those addresses are facts, not claims.
+    result = verify_grounding(
+        narrative="DDoS flood originated from 172.16.0.1 toward 192.168.10.50.",
+        llm_predicted_class="DDoS",
+        llm_confidence=0.92,
+        ml_result=ML_RESULT,
+        evidence_store=EVIDENCE,
+        tools_called=TOOLS,
+        known_identifiers=["172.16.0.1", "192.168.10.50"],
+    )
+    ip_check = next(c for c in result["checks"] if c["check"] == "identifiers_grounded")
+    assert ip_check["passed"] is True
+    assert ip_check["detail"].startswith("All 2 quoted")
+
+
+def test_endpoint_present_in_tool_evidence_is_grounded():
+    evidence = dict(EVIDENCE)
+    evidence["find_related_flows"] = [{"source_ip": "172.16.0.1"}, {"source_ip": "172.16.0.2"}]
+    result = verify_grounding(
+        narrative="Peers 172.16.0.1 and 172.16.0.2 repeat the same signature.",
+        llm_predicted_class="DDoS",
+        llm_confidence=0.92,
+        ml_result=ML_RESULT,
+        evidence_store=evidence,
+        tools_called=TOOLS,
+    )
+    assert next(c for c in result["checks"] if c["check"] == "identifiers_grounded")["passed"] is True
+

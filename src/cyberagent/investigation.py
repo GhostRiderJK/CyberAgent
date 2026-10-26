@@ -153,6 +153,82 @@ def _transform_for_model(features_row: pd.DataFrame) -> pd.DataFrame:
     X = pd.DataFrame(scaler.transform(imputer.transform(X)), columns=full_names, index=features_row.index)
     return X[model_names]
 
+def get_flow_record(flow_id: Union[int, str]) -> Dict[str, Any]:
+    """Connection-level fields of a flow, read from the stored record.
+
+    These are the only IPs and ports the product can state as fact: they come from
+    flows_meta.parquet, not from a narrative. Fields the reduced dataset does not keep
+    are returned as null and listed in `missing_fields`, so a caller can say "not in the
+    record" instead of showing a plausible 0.
+    """
+    record: Dict[str, Any] = {
+        'flow_id': None,
+        'source_ip': None,
+        'source_port': None,
+        'destination_ip': None,
+        'destination_port': None,
+        'protocol': None,
+        'timestamp': None,
+        'missing_fields': [],
+        'available': False,
+    }
+    try:
+        _initialize_data_and_model()
+    except Exception as e:  # data not prepared yet / model missing
+        logger.warning(f"Flow record unavailable for {flow_id}: {e}")
+        record['reason'] = f'Flow metadata could not be loaded: {e}'
+        return record
+
+    if _metadata_df is None:
+        record['reason'] = 'Flow metadata is not loaded.'
+        return record
+
+    try:
+        flow_id_numeric = int(flow_id)
+    except (TypeError, ValueError):
+        flow_id_numeric = flow_id
+    matches = _metadata_df.index[_metadata_df['flow_id'] == flow_id_numeric]
+    if len(matches) == 0:
+        record['reason'] = f'flow_id {flow_id} is not in the stored flow metadata.'
+        return record
+
+    row = _metadata_df.loc[matches[0]]
+    # flows_meta.parquet only keeps the source side of the conversation; the feature
+    # frame carries the destination port and protocol for the same row, so those
+    # identifiers are read from there instead of being reported as unknown.
+    pos = int(_metadata_df.index.get_loc(matches[0]))
+    feat_row = _features_df_full.iloc[pos] if (
+        _features_df_full is not None and pos < len(_features_df_full)) else None
+
+    for out_key, column in (('source_ip', 'Source IP'), ('source_port', 'Source Port'),
+                            ('destination_ip', 'Destination IP'), ('destination_port', 'Destination Port'),
+                            ('protocol', 'Protocol')):
+        value = row[column] if column in _metadata_df.columns else None
+        if (value is None or pd.isna(value)) and feat_row is not None and column in feat_row.index:
+            value = feat_row[column]
+        if value is None or pd.isna(value):
+            record['missing_fields'].append(out_key)
+            continue
+        if out_key.endswith('port'):
+            record[out_key] = int(value)
+        elif out_key == 'protocol':
+            # Stored as float64 in the feature frame; IANA protocol 6 must not be
+            # reported as "6.0".
+            record[out_key] = str(int(value))
+        else:
+            record[out_key] = str(value)
+
+    ts = row['Timestamp'] if 'Timestamp' in _metadata_df.columns else None
+    if ts is not None and pd.notna(ts):
+        record['timestamp'] = str(ts)
+    else:
+        record['missing_fields'].append('timestamp')
+
+    record['flow_id'] = int(row['flow_id'])
+    record['available'] = True
+    return record
+
+
 def predict_proba(flow_id: Union[int, str]) -> Dict[str, Any]:
     """
     Get prediction probabilities for a specific flow.
@@ -216,10 +292,12 @@ def explain_flow(flow_id: Union[int, str]) -> Dict[str, Any]:
     # Get SHAP explanation
     try:
         top_features = explain_instance_top_features(_model, _features_df_model, features_row, top_k=10)
+        explanation_error = None
     except Exception as e:
         logger.error(f"Error generating SHAP explanation: {e}")
         # Fallback to basic explanation
         top_features = []
+        explanation_error = str(e)
 
     # Get the prediction for this flow
     pred_result = predict_proba(flow_id)
@@ -231,7 +309,10 @@ def explain_flow(flow_id: Union[int, str]) -> Dict[str, Any]:
         'shap_values': [float(shap['shap_value']) for shap in top_features],
         'feature_names': [shap['feature'] for shap in top_features],
         'feature_values': [float(shap['value']) for shap in top_features],
-        'top_features': top_features
+        # The served row is post-scaler, so these are z-scores, not raw packet counts.
+        'value_scale': 'standardized',
+        'top_features': top_features,
+        'explanation_error': explanation_error,
     }
 
     logger.info(f"SHAP explanation generated for flow {flow_id} with {len(top_features)} top features")
