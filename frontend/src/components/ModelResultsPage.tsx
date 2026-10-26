@@ -1,188 +1,129 @@
-import * as React from "react";
-
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableRow, TableCaption } from '@/components/ui/table';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { mockModelMetrics, mockModelComparison, mockConfusionMatrix, mockPRCurveData } from '@/mocks/modelResults';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import ConfusionMatrixTable from '@/components/model-results/ConfusionMatrixTable';
+import ModelComparisonTable from '@/components/model-results/ModelComparisonTable';
+import PerClassTable from '@/components/model-results/PerClassTable';
+import PrecisionRecallChart from '@/components/model-results/PrecisionRecallChart';
+import { formatConfidencePct, formatDateTime, formatInteger } from '@/lib/format';
+import { evaluation, isReady } from '@/models/evaluation';
 
 export default function ModelResultsPage() {
-  // Convert PR curve data from arrays to objects for Recharts
-  const benignPRData = mockPRCurveData.benign.recall.map((recall, index) => ({
-    recall,
-    precision: mockPRCurveData.benign.precision[index]
-  }));
+  if (!isReady(evaluation)) {
+    return (
+      <div className="space-y-6">
+        <section>
+          <p className="eyebrow">Reproducible evaluation</p>
+          <h2 className="font-display mt-2 text-3xl font-semibold">Model performance</h2>
+        </section>
+        <Card className="surface panel w-full">
+          <CardHeader>
+            <CardTitle>No evaluation artifact available</CardTitle>
+            <CardDescription className="mt-1 text-sm text-slate-400">{evaluation.reason}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-slate-300">
+            <p>This page renders only from measured numbers, so it stays empty rather than showing sample data.</p>
+            <p className="text-slate-400">Requires: {evaluation.requires}</p>
+            <ol className="list-decimal space-y-1 pl-5 text-slate-300">
+              <li>
+                Build the artifact:<pre className="mono mt-1 inline-block rounded bg-black/30 px-2 py-1 text-xs">{evaluation.command}</pre>
+              </li>
+              <li>
+                Copy it into the frontend:<pre className="mono mt-1 inline-block rounded bg-black/30 px-2 py-1 text-xs">npm run sync:eval</pre>
+              </li>
+            </ol>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  const dosHulkPRData = mockPRCurveData.dosHulk.recall.map((recall, index) => ({
-    recall,
-    precision: mockPRCurveData.dosHulk.precision[index]
-  }));
-
-  const portScanPRData = mockPRCurveData.portScan.recall.map((recall, index) => ({
-    recall,
-    precision: mockPRCurveData.portScan.precision[index]
-  }));
-
-  // Combine data assuming same recall points for all classes (by index)
-  const combinedData = benignPRData.map((point, index) => ({
-    recall: point.recall,
-    benign: point.precision,
-    dosHulk: dosHulkPRData[index]?.precision ?? 0,
-    portScan: portScanPRData[index]?.precision ?? 0,
-  }));
+  const doc = evaluation;
+  const holdoutFailed =
+    doc.zero_day_holdout.length > 0 &&
+    doc.zero_day_holdout.every((r) => r.accuracy === 0 && r.macro_f1 === 0);
 
   return (
-    <div className="space-y-6"><section><p className="eyebrow">Reproducible evaluation</p><h2 className="font-display mt-2 text-3xl font-semibold">Model performance</h2><p className="mt-1 text-sm text-slate-400">Values below are sourced from the repository’s verified held-out evaluation artifact (53,342 samples), not operational traffic.</p></section>
-      {/* Model Comparison Table */}
-      <Card className="surface panel w-full overflow-hidden"><CardHeader className="p-5 pb-0">
-          <CardTitle className="text-navy-200">Model Comparison</CardTitle>
-          <CardDescription className="mt-1 text-sm text-slate-400">
-            Held-out evaluation snapshot. LightGBM is selected by macro F1; this does not establish real-world generalization.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4 p-5">
-          <div className="overflow-x-auto">
-            <Table className="w-full">
-              <TableCaption className="text-navy-400 mb-4">
-                Best model: <span className="font-semibold">{mockModelComparison.bestModel}</span>
-              </TableCaption>
-              <TableHead>
-                <TableRow className="bg-navy-800 text-navy-50">
-                  <TableCell className="px-4 py-3">Model</TableCell>
-                  <TableCell className="px-4 py-3">Accuracy</TableCell>
-                  <TableCell className="px-4 py-3">Precision</TableCell>
-                  <TableCell className="px-4 py-3">Recall</TableCell>
-                  <TableCell className="px-4 py-3">F1 Score</TableCell>
-                  <TableCell className="px-4 py-3">Macro F1</TableCell>
-                  <TableCell className="px-4 py-3">Training Time (s)</TableCell>
-                  <TableCell className="px-4 py-3">Inference Time per 1000 (ms)</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {mockModelMetrics.map((metric, index) => {
-                  const isBest = metric.model === mockModelComparison.bestModel;
-                  return (
-                    <TableRow key={index} className={isBest ? 'bg-navy-700/50' : 'border-t border-navy-700/50'}>
-                      <TableCell className="px-4 py-3 font-medium {isBest ? 'text-navy-200' : 'text-navy-400'}">
-                        {metric.model}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-navy-400">
-                        {(metric.accuracy * 100).toFixed(2)}%
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-navy-400">
-                        {(metric.precision * 100).toFixed(2)}%
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-navy-400">
-                        {(metric.recall * 100).toFixed(2)}%
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-navy-400">
-                        {(metric.f1 * 100).toFixed(2)}%
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-navy-400">
-                        {(metric.macroF1 * 100).toFixed(2)}%
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-navy-400">
-                        {metric.trainingTime.toFixed(2)}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-navy-400">
-                        {metric.inferenceTimePer1000.toFixed(2)}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
+    <div className="space-y-6">
+      <section className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="eyebrow">Reproducible evaluation</p>
+          <h2 className="font-display mt-2 text-3xl font-semibold">Model performance</h2>
+          <p className="mt-1 max-w-3xl text-sm text-slate-400">{doc.dataset.note}</p>
+        </div>
+        <span className="badge badge-amber">Held-out evaluation, not operational traffic</span>
+      </section>
+
+      <Card className="surface panel w-full">
+        <CardContent className="flex flex-wrap gap-x-6 gap-y-1 p-4 text-xs text-slate-400">
+          <span>Source: <span className="mono text-slate-300">{doc.source_path ?? 'artifacts/eval/evaluation.json'}</span></span>
+          <span>Generated: <span className="mono text-slate-300">{formatDateTime(doc.generated_at)}</span></span>
+          <span>Git commit: <span className="mono text-slate-300">{doc.git_commit ?? 'unknown'}</span></span>
+          <span>Test samples: <span className="mono text-slate-300">{formatInteger(doc.dataset.n_samples)}</span></span>
+          <span>
+            Split: <span className="mono text-slate-300">
+              {doc.dataset.split.mode} {(doc.dataset.split.ratios ?? []).map((r) => Math.round(r * 100)).join('/')}% seed {doc.dataset.split.seed ?? '—'}
+            </span>
+          </span>
+          <span>Dataset: <span className="mono text-slate-300">{doc.dataset.source}</span></span>
         </CardContent>
       </Card>
 
-      {/* Confusion Matrix */}
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="text-navy-200">Confusion Matrix (Best Model)</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="overflow-x-auto">
-            <Table className="w-full">
-              <TableCaption className="text-navy-400 mb-4">
-                Rows: Actual class, Columns: Predicted class
-              </TableCaption>
-              <TableHead>
-                <TableRow className="bg-navy-800 text-navy-50">
-                  <TableCell className="px-4 py-3">&nbsp;</TableCell>
-                  {mockConfusionMatrix.labels.map((label, index) => (
-                    <TableCell key={index} className="px-4 py-3 text-navy-400">{label}</TableCell>
+      <ModelComparisonTable doc={doc} />
+      <ConfusionMatrixTable doc={doc} />
+      <PerClassTable doc={doc} />
+      <PrecisionRecallChart doc={doc} />
+
+      {doc.n_holdout_samples > 0 && (
+        <Card className="surface panel w-full overflow-hidden">
+          <CardHeader className="p-5 pb-2">
+            <CardTitle className="text-navy-200">Unseen-attack holdout</CardTitle>
+            <CardDescription className="mt-1 text-sm text-slate-400">
+              {formatInteger(doc.n_holdout_samples)} flows from {doc.zero_day_labels.join(', ')} - attack
+              families deliberately kept out of training. This is the only number on the page measured
+              on genuinely unseen attack traffic.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 p-5 pt-2">
+            <div className="overflow-x-auto">
+              <table className="data-table w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-3 text-left">Model</th>
+                    <th className="px-4 py-3 text-right">Accuracy</th>
+                    <th className="px-4 py-3 text-right">Macro F1</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {doc.zero_day_holdout.map((row) => (
+                    <tr key={row.model}>
+                      <td className="px-4 py-3 text-slate-300">{row.model}</td>
+                      <td className="px-4 py-3 text-right mono">{formatConfidencePct(row.accuracy)}</td>
+                      <td className="px-4 py-3 text-right mono">{formatConfidencePct(row.macro_f1)}</td>
+                    </tr>
                   ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {mockConfusionMatrix.matrix.map((row, rowIdx) => (
-                  <TableRow key={rowIdx} className="border-t border-navy-700/50 hover:bg-navy-800/50">
-                    <TableCell className="px-4 py-3 font-medium text-navy-400">
-                      {mockConfusionMatrix.labels[rowIdx]}
-                    </TableCell>
-                    {row.map((val, colIdx) => (
-                      <TableCell key={colIdx} className="px-4 py-3 text-navy-400">
-                        {val}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                </tbody>
+              </table>
+            </div>
+            {holdoutFailed && (
+              <p className="rounded border border-amber-400/40 bg-amber-400/10 p-3 text-sm text-amber-200">
+                Every model scored 0 on this holdout: none classified an unseen attack family
+                correctly. The 99%+ numbers above describe a stratified split of the same capture
+                days, not novel attacks.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-      {/* PR Curves */}
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="text-navy-200">Precision-Recall Curves</CardTitle>
+      <Card className="surface panel w-full">
+        <CardHeader className="p-5 pb-2">
+          <CardTitle className="text-navy-200">What these numbers do not show</CardTitle>
         </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={combinedData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#6366f1" />
-              <XAxis
-                dataKey="recall"
-                label={{ position: 'insideBottom', offset: -10 }}
-                domain={[0, 1]}
-              />
-              <YAxis
-                label={{ position: 'insideLeft', offset: -10, angle: -90 }}
-                domain={[0, 1]}
-              />
-              <Tooltip
-                labelFormatter={label => `${label}%`}
-                formatter={(value) => {
-                  const num = typeof value === 'number' ? value : 0;
-                  return `${(num * 100).toFixed(2)}%`;
-                }}
-                contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc', padding: '8px', borderRadius: '4px' }}
-              />
-              <Legend />
-              {/* Benign PR Curve */}
-              <Line
-                type="monotone"
-                dataKey="benign"
-                stroke="#6366f1"
-                name="Benign"
-              />
-              {/* DoS Hulk PR Curve */}
-              <Line
-                type="monotone"
-                dataKey="dosHulk"
-                stroke="#10b981"
-                name="DoS Hulk"
-              />
-              {/* PortScan PR Curve */}
-              <Line
-                type="monotone"
-                dataKey="portScan"
-                stroke="#f59e0b"
-                name="PortScan"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+        <CardContent className="p-5 pt-2">
+          <ul className="list-disc space-y-2 pl-5 text-sm text-slate-400">
+            {doc.limitations.map((l) => (
+              <li key={l}>{l}</li>
+            ))}
+          </ul>
         </CardContent>
       </Card>
     </div>
