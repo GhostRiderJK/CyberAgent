@@ -81,6 +81,11 @@ dist
 ruff_cache
 structure.txt
 
+# The packaging rule "lib/" above also matched the frontend source directory;
+# re-include it so its modules are not silently untracked.
+!frontend/src/lib/
+!frontend/src/lib/**
+
 # Keep empty directories
 .gitkeep
 .vercel
