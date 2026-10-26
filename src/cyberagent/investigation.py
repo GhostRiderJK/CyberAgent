@@ -635,7 +635,6 @@ def lookup_attack_pattern(label: str) -> Dict[str, Any]:
         return {
             'label': label,
             'normalized_label': normalized_label,
-            'description': f"Attack pattern for {label}",
             'category': 'Unknown',
             'severity': 'Medium',
             'typical_ports': [],
@@ -653,7 +652,6 @@ def lookup_attack_pattern(label: str) -> Dict[str, Any]:
             return {
                 'label': label,
                 'normalized_label': normalized_label,
-                'description': f"No information found for attack pattern {label}",
                 'category': 'Unknown',
                 'severity': 'Medium',
                 'typical_ports': [],
