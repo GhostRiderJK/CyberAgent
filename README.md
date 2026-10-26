@@ -236,6 +236,21 @@ Results are saved in the `results/` directory, including:
 - `figures/`: Plots and charts.
 - `agent_logs/`: JSONL logs of agent tool calls.
 
+## Documentation
+
+- [AGENTS.md](AGENTS.md) — the project guide: environment rules, working rules, pipeline and
+  limitations. Read it before changing code.
+- [docs/prd.md](docs/prd.md) — what the system is required to do, requirement by requirement, with the
+  status of each.
+- [docs/architecture.md](docs/architecture.md) — how the code is arranged, how data moves through the
+  offline pipeline and the request path, and why the awkward decisions were made.
+- [docs/design_system.md](docs/design_system.md) — the frontend's implemented visual rules: tokens,
+  surfaces, badges, formatters, charts, empty states, accessibility, and where they live.
+- [docs/testing.md](docs/testing.md) — how to run every check on Windows, what the 110 Python and 31
+  frontend tests pin down, and what no test covers.
+- [docs/security.md](docs/security.md) — trust boundaries, the agent's prompt-injection surface, the
+  unauthenticated API as configured, and a checklist to work through before exposure.
+
 ## Makefile Targets
 
 - `setup`: Install dependencies (backend and frontend)

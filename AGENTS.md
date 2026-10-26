@@ -16,8 +16,8 @@ that is why `ml_label_not_overridden` is a grounding check.
 ## Environment
 
 - Windows, cmd/PowerShell. **`make` is not installed.** Never tell the user to run only `make ...`;
-  give the underlying command. README "Usage" has the target-to-command table and
-  `scripts/tasks.py` mirrors the Makefile targets in Python.
+  give the underlying command. README "Usage" maps 13 of the 15 Makefile targets (no row for `help` or
+  `all`); `scripts/tasks.py` mirrors most of them in Python but has no `eval-json` task.
 - Backend: Python 3.13 through **`uv`** (`uv run python -m scripts.<name>`, `uv run pytest -q`),
   FastAPI + uvicorn. Frontend: `npm` in `frontend/` (React 19, Vite 8, Tailwind v4, TypeScript).
 - A real `.env` **does** exist on the owner's machine (701 bytes, ignored by the `.env*` rule); it
