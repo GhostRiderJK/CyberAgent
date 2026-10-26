@@ -83,6 +83,38 @@ make evaluate
 Results land in `results/tables/` (`model_comparison.csv`, `per_class_metrics_all.csv`,
 `zero_day_holdout_results.csv`, `evaluation_summary.json`) and `results/figures/`.
 
+#### Evaluation artifact for the frontend
+
+The Model Results page renders **only** from one generated file, `artifacts/eval/evaluation.json`:
+
+```bash
+make evaluate     # produces models/metrics.json and results/tables/evaluation_summary.json
+make eval-json    # builds artifacts/eval/evaluation.json from them
+cd frontend && npm run sync:eval    # copies it to frontend/src/data/evaluation.json
+```
+
+`npm run build` runs `sync:eval` first (`prebuild`). `build_evaluation_json.py` re-derives accuracy,
+weighted precision/recall/F1 and macro F1 from the stored confusion matrix and aborts if any of them
+disagrees with the reported value, if the matrix is not square over the label list, if its cell total
+is not the test-sample count, or if a precision-recall point leaves `[0, 1]`. Nothing is rounded into
+place to make a check pass; a failed self-check is a build failure. If the models or the split are
+missing, the script names the exact command to regenerate them and stops.
+
+What these numbers do **not** show:
+
+- They describe a stratified random split of CIC-IDS2017 (reduced copy in `data/`). Capture days are
+  mixed across train and test, so same-day near-duplicate flows can appear on both sides; this is not
+  real-world generalisation and not operational-traffic performance.
+- BENIGN is ~55% of the split, so accuracy overstates attack performance. Macro F1 and the per-class
+  table are the load-bearing numbers.
+- Per-sample predicted probabilities and the split indices were not persisted, so PR curves and the
+  matrix are rebuilt from the stored evaluation artifacts; rebuilding them from scratch requires
+  re-running `make preprocess`, which regenerates the split.
+- Precision-recall curves are stored for the selected best model only (one-vs-rest, ≤200 threshold
+  points per class, evenly sampled by index, no smoothing or interpolation).
+- The zero-day holdout (47 Heartbleed/Infiltration flows) is far too small for a confidence interval,
+  and its 0.00% result is a statement about those two families only.
+
 ### Agent Evaluation
 
 Evaluate the agent:
@@ -107,7 +139,10 @@ no `config.yaml` edits needed:
 With `mock` (or no `.env`), the agent falls back to a deterministic tool plan so the
 pipeline and tests run fully offline. Agent reports are audited by the grounding
 verifier (`src/cyberagent/agent/grounding.py`): the ML label is never overridden,
-numbers must trace to tool evidence, and failures force `needs_human_review`.
+numbers must trace to tool evidence, any IP the narrative quotes must appear in the
+evidence or the stored flow record, and failures force `needs_human_review`. When
+review is required the result also carries `needs_human_review_reason`, so a
+100.00%-confidence escalation still explains which rule fired.
 
 ### API
 
@@ -190,6 +225,7 @@ Results are saved in the `results/` directory, including:
 - `train`: Train models
 - `tune`: Run hyperparameter tuning
 - `evaluate`: Evaluate models
+- `eval-json`: Build `artifacts/eval/evaluation.json` for the Model Results page
 - `agent-eval`: Evaluate agent
 - `api`: Start the API server
 - `frontend`: Start the frontend development server
