@@ -44,8 +44,8 @@ app.add_middleware(
 )
 
 class StripPrefixMiddleware:
-    """Strip a fixed path prefix (e.g. /api on Vercel, where rewrites keep the
-    prefix). Set API_PATH_PREFIX=/api in the deployment env; unset = routes at root."""
+    """Strip a fixed path prefix (e.g. /api behind a reverse proxy whose rewrite
+    keeps the prefix). Set API_PATH_PREFIX=/api in the deployment env; unset = routes at root."""
 
     def __init__(self, asgi_app, prefix: str):
         self.asgi_app = asgi_app

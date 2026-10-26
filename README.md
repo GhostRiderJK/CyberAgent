@@ -198,7 +198,7 @@ no `config.yaml` edits needed:
 | `LLM_BASE_URL` | Endpoint base; unset falls back to `http://localhost:11434` for `ollama` | `http://localhost:11434` |
 | `LLM_API_KEY` | Bearer token (masked; keep local) | — |
 | `LLM_MODEL` | Model id, for Ollama the name of a model you have pulled | `llama3.2:3b` |
-| `API_PATH_PREFIX` | Deploy-only; mount API under a prefix (e.g. `/api` on Vercel) | `/api` |
+| `API_PATH_PREFIX` | Deploy-only; mount the API under a path prefix when a proxy keeps that prefix | `/api` |
 | `VITE_API_BASE_URL` | Frontend → API base (e.g. `http://localhost:8000` in dev) | — |
 
 With `mock` (or no `.env`), the agent falls back to a deterministic tool plan so the

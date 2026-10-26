@@ -35,6 +35,3 @@ dev = [
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
-
-[tool.vercel]
-entrypoint = "cyberagent.api.__main__:app"
