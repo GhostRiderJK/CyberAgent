@@ -236,8 +236,10 @@ npm run build
 Double-click (or run) `start.bat` to launch the whole dev stack in two console
 windows: the API on `http://127.0.0.1:8010` (8010 avoids Docker Desktop's habit
 of owning :8000 on this machine) and the frontend on `http://localhost:5173`,
-with `VITE_API_BASE_URL` pointed at the API. The API needs 1-2 minutes to load
-the model and dataset before `/health` responds. `stop.bat` terminates both.
+with `VITE_API_BASE_URL` pointed at the API. `/health` responds as soon as
+uvicorn is listening; the model, the processed features and the SHAP explainer
+load on the first request that needs them, measured at 0.85 s on 2026-10-26.
+`stop.bat` terminates both.
 
 ### Full Development
 
