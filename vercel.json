@@ -4,7 +4,6 @@
     "api": {
       "root": "src",
       "framework": "fastapi",
-      "entrypoint": "src.cyberagent.api.main:app",
       "entrypoint": "cyberagent.api.main:app"
     },
     "web": {

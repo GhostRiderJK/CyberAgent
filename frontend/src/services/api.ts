@@ -1,7 +1,8 @@
 import type { HealthResponse, ModelStatusResponse, PredictRequest, PredictResponse, FlowMetadataResponse, InvestigationResult } from '../models/apiModels';
 
-// Base URL for the API - using relative path for same-origin requests
-const API_BASE_URL = '';
+// Base URL for the API - empty for same-origin (proxied/rewritten),
+// or set VITE_API_BASE_URL=http://localhost:8000 for direct dev against the API server
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 
 export const api = {
   healthCheck: async (): Promise<HealthResponse> => {
@@ -66,6 +67,7 @@ export const api = {
 
     const generator = async function* () {
       try {
+        let currentEvent = '';
         while (true) {
           const { done, value } = await reader.read();
           if (done) {
@@ -76,14 +78,27 @@ export const api = {
           buffer = lines.pop() ?? '';
 
           for (const line of lines) {
-            if (line.startsWith('data: ')) {
+            if (line.startsWith('event: ')) {
+              currentEvent = line.slice(7).trim();
+            } else if (line.startsWith('data: ')) {
               const data = line.slice(6);
+              let parsed: unknown;
               try {
-                const result: InvestigationResult = JSON.parse(data);
-                yield result;
+                parsed = JSON.parse(data);
               } catch (e) {
                 console.error('Failed to parse SSE data:', data, e);
+                currentEvent = '';
+                continue;
               }
+              if (currentEvent === 'error') {
+                throw new Error(String((parsed as { error?: string }).error ?? 'Investigation failed'));
+              }
+              if (currentEvent === 'end') {
+                yield parsed as InvestigationResult;
+                return;
+              }
+              // start / progress events carry no result payload
+              currentEvent = '';
             }
           }
         }

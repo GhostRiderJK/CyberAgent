@@ -49,14 +49,22 @@ export interface FlowMetadataResponse {
   flow_packets_s: number;
 }
 
+export interface GroundingCheck {
+  passed: boolean;
+  checks: Array<{ check: string; passed: boolean; detail: string }>;
+  ungrounded_numbers: string[];
+}
+
 export interface InvestigationResult {
   verdict: string;
   predicted_class: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: string;
   confidence: number;
   needs_human_review: boolean;
-  evidence: string[];
-  mitre_technique: string | null;
+  evidence: Array<{ source_tool: string; source_value: string }>;
+  mitre_technique: string;
   recommended_actions: string[];
   limitations: string[];
+  grounding_check?: GroundingCheck;
+  tool_call_events?: Array<{ tool: string; kwargs: Record<string, string>; status: string; timestamp: number }>;
 }
