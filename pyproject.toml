@@ -15,12 +15,22 @@ dependencies = [
     "fastapi",
     "uvicorn",
     "sse-starlette",
-    "anthropic",
     "httpx",
+    "python-dotenv",
+    "xgboost",
+    "matplotlib",
+    "seaborn",
+    "tabulate",
+    "shap",
+    "optuna",
+    "mlflow",
 ]
 
 [project.optional-dependencies]
-dev = []
+dev = [
+    "pytest",
+    "ruff",
+]
 
 [build-system]
 requires = ["setuptools", "wheel"]

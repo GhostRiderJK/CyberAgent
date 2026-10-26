@@ -106,6 +106,9 @@ def evaluate_model(model, X_test: pd.DataFrame, y_test: pd.Series, model_name: s
 
     # Predict
     y_test_pred = model.predict(X_test)
+    # LGBM/XGB are fitted with LabelEncoder'd integers; decode back to class names
+    if hasattr(model, 'label_encoder_'):
+        y_test_pred = model.label_encoder_.inverse_transform(y_test_pred)
 
     # Get probabilities if available
     y_test_proba = None

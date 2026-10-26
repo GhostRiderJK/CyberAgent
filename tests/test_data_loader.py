@@ -135,7 +135,7 @@ def test_load_data_real_not_found():
 
 def test_load_machinelearningcve_not_found():
     """Test that MachineLearningCSV loading handles missing data."""
-    df = load_machinelearningcve_data()
+    df = load_machinelearningcve_data(raw_dir="__no_such_dir__")
     # Should return empty DataFrame when data not found
     assert isinstance(df, pd.DataFrame)
     assert len(df) == 0

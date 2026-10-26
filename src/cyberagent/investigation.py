@@ -22,10 +22,11 @@ _features_df_model: Optional[pd.DataFrame] = None  # without flow_id, only selec
 _metadata_df: Optional[pd.DataFrame] = None        # with flow_id column
 _model: Any = None
 _explainer: Any = None
+_preprocess_artifacts: Optional[Dict[str, Any]] = None  # imputer/scaler fitted during preprocessing
 
 def _initialize_data_and_model():
     """Initialize data and model if not already loaded."""
-    global _features_df_full, _features_df_model, _metadata_df, _model, _explainer
+    global _features_df_full, _features_df_model, _metadata_df, _model, _explainer, _preprocess_artifacts
 
     if _features_df_full is not None and _features_df_model is not None and _metadata_df is not None and _model is not None:
         return
@@ -66,6 +67,17 @@ def _initialize_data_and_model():
     # We'll reset index to be safe, but we rely on flow_id for lookup.
     # For simplicity, we keep the default index (0..n-1) and assume the rows are in the same order.
     # To be safe, we can set index to flow_id for both dataframes, but we'll keep as is and use flow_id to locate the row.
+
+    # Load fitted preprocessing artifacts (imputer/scaler) if available so
+    # serving applies the same transformations as training did.
+    artifacts_path = processed_dir / "preprocess_artifacts.joblib"
+    if artifacts_path.exists():
+        _preprocess_artifacts = joblib.load(artifacts_path)
+        logger.info("Loaded preprocessing artifacts (imputer/scaler) for serving")
+    else:
+        _preprocess_artifacts = None
+        logger.warning("preprocess_artifacts.joblib not found; serving uses raw features "
+                       "(run `make preprocess` to align with the training pipeline)")
 
     # Load or train model
     model_path = Path("models/lightgbm.joblib")
@@ -119,7 +131,27 @@ def _get_model_features_for_flow_id(flow_id: Union[int, str]) -> pd.DataFrame:
 
     # Get the model features for that row
     features_row = _features_df_model.iloc[idx:idx+1]  # single row DataFrame
-    return features_row
+    return _transform_for_model(features_row)
+
+def _transform_for_model(features_row: pd.DataFrame) -> pd.DataFrame:
+    """Apply the fitted imputer/scaler so serving matches the training pipeline.
+
+    The imputer/scaler were fitted on ALL pre-selection feature columns, so the
+    row is padded to that column set, transformed, then reduced to the kept
+    features the model was trained on.
+    """
+    if _preprocess_artifacts is None:
+        return features_row
+    imputer = _preprocess_artifacts.get('imputer')
+    scaler = _preprocess_artifacts.get('scaler')
+    full_names = _preprocess_artifacts.get('feature_names')       # columns imputer/scaler were fitted on
+    model_names = _preprocess_artifacts.get('selected_feature_names')  # columns the model was trained on
+    if imputer is None or scaler is None or not full_names or not model_names:
+        return features_row
+    X = features_row.reindex(columns=full_names)
+    X = X.replace([np.inf, -np.inf], np.nan)
+    X = pd.DataFrame(scaler.transform(imputer.transform(X)), columns=full_names, index=features_row.index)
+    return X[model_names]
 
 def predict_proba(flow_id: Union[int, str]) -> Dict[str, Any]:
     """

@@ -618,6 +618,7 @@ def example_preprocessing_pipeline(save_outputs: bool = True) -> Dict[str, Any]:
         'X_train': X_train_p, 'X_val': X_val_p, 'X_test': X_test_p,
         'y_train': y_train_p, 'y_val': y_val, 'y_test': y_test,
         'imbalance_info': imbalance_info,
+        'imputer': imputer, 'scaler': scaler, 'feature_mask': feature_mask,
         'selector': selector, 'clean_stats': clean_stats,
         'holdout_features': holdout_features, 'holdout_metadata': holdout_metadata,
     }

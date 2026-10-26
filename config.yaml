@@ -8,7 +8,7 @@ dataset:
   raw_dir: data/raw
   processed_dir: data/processed
   primary_folder: GeneratedLabelledFlows/TrafficLabelling
-  secondary_folder: MachineLearningCVE
+  secondary_folder: MachineLearningCSV/MachineLearningCVE
   file_extension: ".pcap_ISCX.csv"
 
 # Dataset reduction settings

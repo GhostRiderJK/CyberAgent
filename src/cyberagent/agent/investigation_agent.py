@@ -1,10 +1,13 @@
 """
 Investigation agent for CyberAgent.
-Implements a controlled hand-written agent loop that uses investigation tools
-to investigate ML-detected flows.
+LLM-driven agent loop: the model chooses which investigation tools to call,
+the deterministic tools gather evidence, and a grounding verifier audits the
+final report against that evidence. The LLM never labels traffic - the ML
+prediction is authoritative and cannot be overridden.
 """
 import time
 import json
+import inspect
 from typing import Dict, Any, List, Optional, Tuple, Union
 from cyberagent.investigation import (
     predict_proba,
@@ -14,6 +17,8 @@ from cyberagent.investigation import (
     lookup_attack_pattern
 )
 from cyberagent.logging_setup import logger
+from cyberagent.llm import get_llm, LLMError
+from cyberagent.agent.grounding import verify_grounding
 
 # Maximum tool calls per event as per requirements
 MAX_TOOL_CALLS = 6
@@ -27,22 +32,129 @@ AVAILABLE_TOOLS = {
     'lookup_attack_pattern': lookup_attack_pattern
 }
 
+TOOL_DOCS = """Available tools (call at most one per step):
+- explain_flow(flow_id): top contributing features for this flow.
+- find_related_flows(flow_id, time_window_minutes): flows near this one in time/space.
+- similar_known_attacks(flow_id, k): closest labelled attack exemplars.
+- lookup_attack_pattern(label): MITRE ATT&CK description for a class.
+Respond with ONE JSON object, no prose:
+  {"thought": "...", "tool": "<tool name>", "args": {...}}
+or when the evidence is sufficient:
+  {"thought": "...", "tool": null, "args": {}}
+flow_id is fixed to the value given; the ML prediction shown is authoritative."""
+
+FALLBACK_PLAN = ['explain_flow', 'find_related_flows', 'similar_known_attacks', 'lookup_attack_pattern']
+
 class InvestigationAgent:
     """
-    Hand-written investigation agent loop.
+    Controlled agent loop: LLM-planned tool use over deterministic tools,
+    with a fixed fallback plan when no LLM backend is configured.
     """
 
     def __init__(self):
         self.tool_call_history: List[Dict[str, Any]] = []
         self.investigation_results: Dict[str, Any] = {}
         self.start_time: Optional[float] = None
+        self._on_event: Optional[callable] = None
 
-    def investigate_flow(self, flow_id: Union[int, str]) -> Dict[str, Any]:
+    # ---- LLM-driven tool selection ----------------------------------------
+
+    def _normalize_args(self, tool: str, flow_id, ml_result: Dict[str, Any], raw_args: Dict[str, Any]) -> Dict[str, Any]:
+        """Force flow_id/label to trusted values and sanitize LLM-supplied kwargs."""
+        norm = dict(raw_args)
+        if tool == 'lookup_attack_pattern':
+            norm = {'label': ml_result.get('predicted_class', 'BENIGN')}
+        else:
+            norm['flow_id'] = flow_id
+        if tool == 'find_related_flows':
+            norm.setdefault('time_window_minutes', 30)
+        if tool == 'similar_known_attacks':
+            norm.setdefault('k', 5)
+        try:
+            sig = inspect.signature(AVAILABLE_TOOLS[tool])
+            norm = {k: v for k, v in norm.items() if k in sig.parameters}
+        except (TypeError, ValueError):
+            pass
+        return norm
+
+    def _select_next_tool(self, flow_id: Union[int, str], ml_result: Dict[str, Any]) -> Optional[Tuple[str, Dict[str, Any]]]:
+        """Ask the LLM which tool to call next. None means done or LLM unavailable."""
+        llm = get_llm()
+        if not llm.available:
+            return None
+        done_tools = [c['tool'] for c in self.tool_call_history]
+        messages = [
+            {"role": "system", "content": "You are a network-security investigation planner. "
+                                          "Never invent labels or numbers; only gather evidence with the tools. "
+                                          + TOOL_DOCS},
+            {"role": "user", "content": f"flow_id = {flow_id}\n"
+                                        f"ML prediction (authoritative): {json.dumps({k: ml_result[k] for k in ('predicted_class', 'confidence') if k in ml_result})}\n"
+                                        f"Tools already called: {done_tools}\n"
+                                        f"Tool calls remaining: {MAX_TOOL_CALLS - len(self.tool_call_history)}\n"
+                                        f"Choose the next most informative uncalled tool, or null if evidence suffices."},
+        ]
+        try:
+            reply = llm.chat_json(messages, max_tokens=4000)
+        except LLMError as e:
+            logger.warning(f"LLM tool selection failed, falling back to plan: {e}")
+            return None
+
+        tool = reply.get("tool")
+        if not tool or tool not in AVAILABLE_TOOLS or tool == 'predict_proba' or tool in done_tools:
+            return None
+        args = self._normalize_args(tool, flow_id, ml_result, reply.get("args") or {})
+        logger.info(f"LLM chose tool {tool} (thought: {str(reply.get('thought'))[:120]})")
+        return tool, args
+
+    def _safe_call(self, tool: str, flow_id, ml_result: Dict[str, Any], raw_args: Optional[Dict[str, Any]] = None) -> None:
+        kwargs = self._normalize_args(tool, flow_id, ml_result, raw_args or {})
+        try:
+            result = AVAILABLE_TOOLS[tool](**kwargs)
+            self._record_tool_call(tool, kwargs, result)
+            self.investigation_results[tool] = result
+            logger.info(f"Tool {tool} returned result")
+            if self._on_event:
+                self._on_event({"event": "tool_call", "tool": tool,
+                                "kwargs": {k: str(v) for k, v in kwargs.items()},
+                                "status": "completed", "timestamp": time.time()})
+        except Exception as e:
+            logger.error(f"Error calling tool {tool}: {e}")
+            self.investigation_results.setdefault('tool_errors', {})[tool] = str(e)
+            if self._on_event:
+                self._on_event({"event": "tool_call", "tool": tool,
+                                "kwargs": {k: str(v) for k, v in kwargs.items()},
+                                "status": "failed", "timestamp": time.time()})
+
+    def get_tool_call_events(self) -> List[Dict[str, Any]]:
+        """Structured timeline of tool calls for UI progress display."""
+        return [
+            {
+                "event": "tool_call",
+                "tool": c["tool"],
+                "kwargs": {k: str(v) for k, v in c["kwargs"].items()},
+                "status": "completed",
+                "timestamp": c["timestamp"],
+            }
+            for c in self.tool_call_history
+        ]
+
+    def _run_fallback_plan(self, flow_id, ml_result: Dict[str, Any]) -> None:
+        """Deterministic investigation plan used without an LLM backend."""
+        for tool in FALLBACK_PLAN:
+            if len(self.tool_call_history) >= MAX_TOOL_CALLS:
+                break
+            self._safe_call(tool, flow_id, ml_result)
+            if self._should_stop_early():
+                break
+
+    def investigate_flow(self, flow_id: Union[int, str],
+                         on_event: Optional[callable] = None) -> Dict[str, Any]:
         """
         Main investigation loop for a given flow.
 
         Args:
             flow_id: The flow ID to investigate
+            on_event: optional callback receiving {'event':'tool_call',...} dicts
 
         Returns:
             Investigation result following the Pydantic schema
@@ -50,10 +162,11 @@ class InvestigationAgent:
         self.start_time = time.time()
         self.tool_call_history = []
         self.investigation_results = {}
+        self._on_event = on_event
 
         logger.info(f"Starting investigation for flow_id: {flow_id}")
 
-        # Step 1: Get initial ML prediction
+        # Step 1: Get initial ML prediction (always authoritative)
         try:
             ml_result = predict_proba(flow_id)
             self._record_tool_call('predict_proba', {'flow_id': flow_id}, ml_result)
@@ -63,61 +176,56 @@ class InvestigationAgent:
             # Return a basic error result
             return self._create_error_result(flow_id, str(e))
 
-        # Step 2: Agent loop - decide which tools to call
-        # In a real implementation, this would use an LLM to decide.
-        # For now, we use a predefined sequence that demonstrates the capabilities.
-        # The agent should not exceed MAX_TOOL_CALLS.
-
-        # Define a simple investigation strategy (this would be LLM-driven in practice)
-        investigation_plan = [
-            ('explain_flow', {'flow_id': flow_id}),
-            ('find_related_flows', {'flow_id': flow_id, 'time_window_minutes': 30}),
-            ('similar_known_attacks', {'flow_id': flow_id, 'k': 5}),
-            ('lookup_attack_pattern', {'label': ml_result.get('predicted_class', 'BENIGN')})
-        ]
-
-        # Execute the plan, but respect MAX_TOOL_CALLS and avoid repeats
-        tool_index = 0
-        while tool_index < len(investigation_plan) and len(self.tool_call_history) < MAX_TOOL_CALLS:
-            tool_name, kwargs = investigation_plan[tool_index]
-
-            # Check if we've already called this tool with the same arguments
-            if self._is_repeat_call(tool_name, kwargs):
-                logger.info(f"Skipping repeat call to {tool_name} with args {kwargs}")
-                tool_index += 1
-                continue
-
-            try:
-                # Call the tool
-                tool_func = AVAILABLE_TOOLS[tool_name]
-                result = tool_func(**kwargs)
-
-                # Record the call
-                self._record_tool_call(tool_name, kwargs, result)
-
-                # Store result for later use
-                self.investigation_results[tool_name] = result
-
-                logger.info(f"Tool {tool_name} returned result for flow {flow_id}")
-
-                # Check if we have enough information to make a verdict early
-                # (This is a simplification - in reality, the LLM would decide when to stop)
-                if self._should_stop_early():
+        # Step 2: Evidence gathering - LLM-planned when configured, else fixed plan
+        llm = get_llm()
+        if llm.available:
+            attempts = 0
+            while len(self.tool_call_history) < MAX_TOOL_CALLS and attempts < MAX_TOOL_CALLS + 2:
+                attempts += 1
+                choice = self._select_next_tool(flow_id, ml_result)
+                if choice is None:
                     break
+                tool, kwargs = choice
+                if self._is_repeat_call(tool, kwargs):
+                    continue
+                self._safe_call(tool, flow_id, ml_result, kwargs)
+            if len(self.tool_call_history) < 2:
+                logger.warning("LLM gathered too little evidence; completing with deterministic plan")
+                self._run_fallback_plan(flow_id, ml_result)
+        else:
+            logger.info("No LLM backend configured (mock); using deterministic investigation plan")
+            self._run_fallback_plan(flow_id, ml_result)
 
-            except Exception as e:
-                logger.error(f"Error calling tool {tool_name} for flow {flow_id}: {e}")
-                # Try once more with a fallback or continue to next tool
-                # For now, we'll just continue to the next tool
-                pass
-
-            tool_index += 1
-
-        # Step 3: Synthesize final verdict
+        # Step 3: Synthesize final verdict (with LLM report + grounding audit)
         verdict = self._synthesize_verdict(flow_id)
 
         logger.info(f"Investigation completed for flow {flow_id} in {time.time() - self.start_time:.2f}s")
         return verdict
+
+    # ---- LLM report generation -------------------------------------------
+
+    def _narrative_from_llm(self, ml_pred: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Ask the LLM for an analyst report; None when no backend is configured."""
+        llm = get_llm()
+        if not llm.available:
+            return None
+        compact = {k: v for k, v in self.investigation_results.items() if k != 'ml_prediction'}
+        messages = [
+            {"role": "system", "content": "You are a SOC analyst. Write an investigation report "
+                                          "strictly from the evidence JSON given. Do not change the ML label. "
+                                          "Use only numbers present in the evidence. Reply with ONE JSON object: "
+                                          "{\"summary\": str, \"severity\": \"Low|Medium|High\", "
+                                          "\"recommended_actions\": [str]}"},
+            {"role": "user", "content": json.dumps({"ml_prediction": {
+                "predicted_class": ml_pred.get('predicted_class'),
+                "confidence": ml_pred.get('confidence')},
+                "evidence": compact}, default=str)[:6000]},
+        ]
+        try:
+            return llm.chat_json(messages, max_tokens=8000)
+        except LLMError as e:
+            logger.warning(f"LLM report generation failed: {e}")
+            return None
 
     def _create_error_result(self, flow_id: Union[int, str], error: str) -> Dict[str, Any]:
         """Create an error result when investigation cannot proceed."""
@@ -205,6 +313,34 @@ class InvestigationAgent:
         # Overall verdict (could be more sophisticated)
         verdict = self._determine_overall_verdict(predicted_class, confidence, evidence)
 
+        # LLM analyst report, audited by the grounding verifier before it is trusted
+        grounding = {"passed": True, "checks": [
+            {"check": "llm_not_used", "passed": True,
+             "detail": "No LLM backend: verdict built from deterministic tool evidence only"}
+        ], "ungrounded_numbers": []}
+
+        report = self._narrative_from_llm(ml_pred)
+        if report:
+            narrative = str(report.get('summary', ''))
+            grounding = verify_grounding(
+                narrative=narrative,
+                llm_predicted_class=predicted_class,
+                llm_confidence=confidence,
+                ml_result=ml_pred,
+                evidence_store=dict(self.investigation_results),
+                tools_called=[c['tool'] for c in self.tool_call_history],
+            )
+            if narrative:
+                verdict = f"{verdict} | Analyst report: {narrative}"
+            if report.get('severity') in ('Low', 'Medium', 'High'):
+                severity = report['severity']
+            if isinstance(report.get('recommended_actions'), list) and report['recommended_actions']:
+                recommended_actions = [str(a) for a in report['recommended_actions']][:5]
+            if not grounding['passed']:
+                needs_human_review = True
+                bad = [c['detail'] for c in grounding['checks'] if not c['passed']]
+                limitations.append(f"Grounding verifier failed: {'; '.join(bad)}")
+
         result = {
             'verdict': verdict,
             'predicted_class': predicted_class,
@@ -214,7 +350,9 @@ class InvestigationAgent:
             'evidence': evidence,
             'mitre_technique': mitre_technique,
             'recommended_actions': recommended_actions,
-            'limitations': limitations
+            'limitations': limitations,
+            'grounding_check': grounding,
+            'tool_call_events': self.get_tool_call_events()
         }
 
         return result
@@ -351,10 +489,9 @@ class InvestigationAgent:
             limitations.append(f"Investigation stopped early after {len(self.tool_call_history)} tool calls")
 
         if self.tool_call_history:
-            # Check if we had any errors
-            error_count = sum(1 for call in self.tool_call_history if isinstance(call['result'], Exception))
-            if error_count > 0:
-                limitations.append(f"Encountered {error_count} tool execution errors")
+            errors = self.investigation_results.get('tool_errors', {})
+            if errors:
+                limitations.append(f"Encountered {len(errors)} tool execution errors: {', '.join(errors)}")
 
         # Add general limitations
         limitations.append("Limited to predefined tool set")
@@ -377,18 +514,19 @@ class InvestigationAgent:
                 return f"Suspicious traffic detected: {predicted_class} (requires further investigation)"
 
 # Convenience function for external use
-def investigate_flow(flow_id: Union[int, str]) -> Dict[str, Any]:
+def investigate_flow(flow_id: Union[int, str], on_event: Optional[callable] = None) -> Dict[str, Any]:
     """
     Convenience function to investigate a flow.
 
     Args:
         flow_id: The flow ID to investigate
+        on_event: optional live progress callback for tool calls
 
     Returns:
         Investigation result following the Pydantic schema
     """
     agent = InvestigationAgent()
-    return agent.investigate_flow(flow_id)
+    return agent.investigate_flow(flow_id, on_event=on_event)
 
 if __name__ == "__main__":
     # Simple test

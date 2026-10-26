@@ -53,6 +53,7 @@ class InvestigationResult(BaseModel):
     mitre_technique: str
     recommended_actions: List[str]
     limitations: List[str]
+    grounding_check: Optional[Dict[str, Any]] = None
 
 
 class InvestigationProgress(BaseModel):

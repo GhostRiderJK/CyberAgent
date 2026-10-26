@@ -427,8 +427,8 @@ def main():
 
     # In a real scenario, you would load and preprocess data
     # For this example, we'll use synthetic data
-    from src.cyberagent.data_loader import load_data
-    from src.cyberagent.preprocess import example_preprocessing_pipeline
+    from cyberagent.data_loader import load_data
+    from cyberagent.preprocess import example_preprocessing_pipeline
 
     # Run example preprocessing to get data
     data_dict = example_preprocessing_pipeline()
@@ -442,7 +442,7 @@ def main():
     logger.info(f"Data shapes - Train: {X_train.shape}, Val: {X_val.shape}")
 
     # Get class weights for imbalance handling
-    _, imbalance_info = data_dict['imbalance_info']
+    imbalance_info = data_dict['imbalance_info']
     class_weight_dict = imbalance_info.get('class_weight')
 
     # Run hyperparameter tuning (with reduced trials for demo)

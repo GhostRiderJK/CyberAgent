@@ -43,6 +43,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class StripPrefixMiddleware:
+    """Strip a fixed path prefix (e.g. /api on Vercel, where rewrites keep the
+    prefix). Set API_PATH_PREFIX=/api in the deployment env; unset = routes at root."""
+
+    def __init__(self, asgi_app, prefix: str):
+        self.asgi_app = asgi_app
+        self.prefix = prefix.rstrip("/")
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] in ("http", "websocket") and self.prefix:
+            path = scope.get("path", "")
+            root = scope.get("root_path", "")
+            if path.startswith(root + self.prefix):
+                new_path = path[len(root + self.prefix):] or "/"
+                scope = dict(scope)
+                scope["path"] = new_path
+                scope["raw_path"] = new_path.encode()
+        await self.asgi_app(scope, receive, send)
+
+import os as _os
+_prefix = _os.environ.get("API_PATH_PREFIX", "")
+if _prefix:
+    app.add_middleware(StripPrefixMiddleware, prefix=_prefix)
+    logger.info(f"API routes mounted under prefix: {_prefix}")
+
 # Health check endpoint
 @app.get("/health", response_model=models.HealthResponse)
 async def health_check():
@@ -134,38 +159,41 @@ async def get_flow_metadata(flow_id: int):
 async def investigate(request: models.PredictRequest):
     logger.info(f"Starting investigation for flow_id: {request.flow_id}")
 
-    # We'll use a generator to yield SSE events.
     async def event_generator() -> AsyncGenerator[str, None]:
-        # Send start event immediately
-        logger.info("Yielding start event")
+        loop = asyncio.get_event_loop()
+        queue: asyncio.Queue = asyncio.Queue()
+
+        def on_event(ev: dict):
+            # Thread-safe push of tool-call progress from the worker thread
+            loop.call_soon_threadsafe(queue.put_nowait, ev)
+
         yield f"event: start\n"
         yield f"data: {json.dumps({'flow_id': request.flow_id})}\n\n"
-        # Small delay to ensure the start event is flushed
-        await asyncio.sleep(0)
+
+        task = loop.run_in_executor(executor, lambda: investigate_flow(request.flow_id, on_event=on_event))
 
         try:
-            # Run the investigation in a thread pool to avoid blocking the event loop
-            loop = asyncio.get_event_loop()
-            logger.info("Starting investigation in thread pool")
+            while not task.done():
+                try:
+                    ev = await asyncio.wait_for(queue.get(), timeout=0.5)
+                    yield f"event: progress\n"
+                    yield f"data: {json.dumps(ev)}\n\n"
+                except asyncio.TimeoutError:
+                    continue
+            # Drain any events queued between done() and the final await
+            while not queue.empty():
+                ev = queue.get_nowait()
+                yield f"event: progress\n"
+                yield f"data: {json.dumps(ev)}\n\n"
 
-            # Yield a progress event to keep connection alive
-            yield f"event: progress\n"
-            yield f"data: {json.dumps({'message': 'Investigation started', 'step': 'initializing'})}\n\n"
-            await asyncio.sleep(0)
-
-            result = await loop.run_in_executor(executor, investigate_flow, request.flow_id)
-            logger.info("Investigation completed, yielding result")
-
-            # Check if investigation returned an error result
+            result = await task
             if result.get('predicted_class') == 'UNKNOWN' or 'error' in str(result.get('verdict', '')).lower():
                 logger.error(f"Investigation returned error: {result.get('verdict')}")
                 yield f"event: error\n"
                 yield f"data: {json.dumps({'error': result.get('verdict', 'Investigation failed')})}\n\n"
             else:
-                # Send the result as the end event
                 yield f"event: end\n"
                 yield f"data: {json.dumps(result)}\n\n"
-            logger.info("Result event yielded")
         except Exception as e:
             logger.error(f"Error during investigation: {e}")
             yield f"event: error\n"
