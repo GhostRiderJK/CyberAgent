@@ -1,4 +1,4 @@
-# CyberAgent: Agent-Assisted Network Threat Detection and Investigation using Machine Learning
+# CyberAgent: Agent-Assisted Network Threat Detection and Investigation using Machine Learning.
 
 A university ML case-study project for detecting and investigating malicious network flows.
 
