@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/CyberAgent/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CyberAgent — case study: agent-assisted threat detection</title>
+    <meta
+      name="description"
+      content="An academic ESE case study: a LightGBM flow classifier on CIC-IDS2017, an investigation agent whose report is audited by grounding checks, and a localhost SOC platform built on top. Every number here is read off a stored artifact."
+    />
+    <style>
+      :root {
+        --bg: #0a0e27;
+        --ink: #f8fafc;
+        --body: #cbd5e1;
+        --muted: #94a3b8;
+        --cyan: #22d3ee;
+        --emerald: #34d399;
+        --amber: #fbbf24;
+        --red: #f87171;
+        --line: rgba(255, 255, 255, 0.09);
+        font-family: Satoshi, Inter, ui-sans-serif, system-ui, sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 85% -10%, rgba(102, 126, 234, 0.18), transparent 34rem),
+          radial-gradient(circle at 5% 80%, rgba(34, 211, 238, 0.06), transparent 28rem),
+          var(--bg);
+        background-attachment: fixed;
+      }
+
+      .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px 96px; }
+
+      header { padding: 84px 0 32px; }
+
+      .eyebrow {
+        color: var(--cyan);
+        font-size: 0.69rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        font-family: "Clash Grotesk", Satoshi, Inter, ui-sans-serif, system-ui, sans-serif;
+        font-size: clamp(2.4rem, 6vw, 4.2rem);
+        line-height: 1.02;
+        letter-spacing: -0.025em;
+        margin: 18px 0 0;
+      }
+
+      .lede { font-size: 1.06rem; line-height: 1.68; color: var(--body); max-width: 74ch; margin: 20px 0 0; }
+
+      .rule-line { color: var(--muted); font-size: 0.84rem; margin-top: 20px; }
+
+      .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+
+      section { margin-top: 56px; scroll-margin-top: 24px; }
+
+      h2 {
+        font-family: "Clash Grotesk", Satoshi, Inter, ui-sans-serif, system-ui, sans-serif;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+        margin: 0 0 6px;
+      }
+
+      h3 { font-size: 1rem; margin: 26px 0 8px; color: var(--ink); }
+
+      .sub { color: var(--muted); font-size: 0.9rem; line-height: 1.6; max-width: 78ch; margin: 0 0 20px; }
+
+      p { color: var(--body); line-height: 1.68; font-size: 0.94rem; margin: 12px 0; }
+
+      .panel {
+        background: rgba(16, 23, 51, 0.68);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 24px 26px;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22);
+      }
+
+      .notice { border-left: 3px solid var(--amber); }
+      .notice h2 { color: var(--amber); }
+
+      .grid { display: grid; gap: 14px; }
+      .strip { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+
+      .stat { background: rgba(8, 13, 34, 0.92); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; }
+      .stat b { display: block; font-size: 1.5rem; letter-spacing: -0.02em; }
+      .stat span { display: block; color: var(--muted); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 6px; }
+
+      table { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin-top: 8px; }
+      th {
+        color: var(--muted); font-size: 0.68rem; letter-spacing: 0.08em; text-align: left;
+        text-transform: uppercase; padding: 10px 12px; background: rgba(255, 255, 255, 0.035);
+      }
+      td { padding: 10px 12px; border-top: 1px solid rgba(255, 255, 255, 0.07); color: var(--body); }
+      td.num, th.num { text-align: right; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+      tr.best td { color: var(--ink); background: rgba(34, 211, 238, 0.05); }
+      caption { color: var(--muted); text-align: left; font-size: 0.78rem; padding-bottom: 8px; }
+
+      ul, ol { color: var(--body); line-height: 1.66; font-size: 0.92rem; padding-left: 22px; margin: 10px 0; }
+      li { margin: 6px 0; }
+
+      .badge {
+        display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 999px;
+        padding: 0.26rem 0.55rem; font-size: 0.72rem; font-weight: 700; line-height: 1; border: 1px solid transparent;
+      }
+      .badge::before { content: ""; width: 0.4rem; height: 0.4rem; border-radius: 50%; background: currentColor; }
+      .b-live { color: var(--emerald); background: rgba(52, 211, 153, 0.11); border-color: rgba(52, 211, 153, 0.24); }
+      .b-fixture { color: var(--amber); background: rgba(251, 191, 36, 0.11); border-color: rgba(251, 191, 36, 0.24); }
+      .b-refuse { color: var(--red); background: rgba(248, 113, 113, 0.11); border-color: rgba(248, 113, 113, 0.24); }
+      .b-artifact { color: var(--cyan); background: rgba(34, 211, 238, 0.11); border-color: rgba(34, 211, 238, 0.24); }
+
+      a { color: var(--cyan); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+      a:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; border-radius: 4px; }
+
+      .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+      .btn {
+        display: inline-block; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 12px;
+        padding: 0.72rem 1.05rem; background: rgba(255, 255, 255, 0.05); color: var(--ink);
+        text-decoration: none; font-weight: 600; font-size: 0.9rem;
+      }
+      .btn.primary { border-color: rgba(34, 211, 238, 0.5); background: rgba(34, 211, 238, 0.1); }
+      @media (prefers-reduced-motion: no-preference) { .btn { transition: border-color 0.2s ease, background 0.2s ease; } .btn:hover { border-color: var(--cyan); background: rgba(34, 211, 238, 0.14); } }
+
+      .shots { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; }
+      figure { margin: 0; background: rgba(8, 13, 34, 0.92); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+      figure a.shotlink { display: block; border-bottom: 1px solid var(--line); }
+      figure img.shot { display: block; width: 100%; height: 210px; object-fit: cover; object-position: top left; background: #060a1c; }
+      figure a.shotlink:focus-visible, figure a.shotlink:hover { outline: 2px solid var(--cyan); outline-offset: -2px; }
+      figcaption { padding: 14px 16px 16px; font-size: 0.82rem; line-height: 1.55; color: var(--body); }
+      figcaption b { display: block; color: var(--ink); font-size: 0.88rem; margin-bottom: 4px; }
+      figcaption .mono { color: var(--muted); font-size: 0.76rem; }
+      figcaption .full { display: block; margin-top: 8px; font-size: 0.74rem; color: var(--muted); }
+
+      pre {
+        background: #060a1c; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px;
+        overflow-x: auto; font-size: 0.8rem; line-height: 1.7; color: var(--body);
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      }
+      code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 0.85em; color: var(--ink); background: rgba(255, 255, 255, 0.06); padding: 0.1rem 0.35rem; border-radius: 5px; }
+
+      .flow { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+      .flow div { background: rgba(8, 13, 34, 0.92); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+      .flow b { display: block; font-size: 0.86rem; color: var(--ink); }
+      .flow span { display: block; color: var(--muted); font-size: 0.78rem; line-height: 1.5; margin-top: 5px; }
+
+      footer { margin-top: 72px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.8rem; line-height: 1.7; }
+
+      @media (max-width: 640px) { header { padding-top: 52px; } .wrap { padding: 0 16px 64px; } .panel { padding: 20px 16px; } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="eyebrow">AUCML TE7483 &middot; End-of-Semester project &middot; 30-mark rubric &middot; solo</div>
+        <h1>CyberAgent</h1>
+        <p class="lede">
+          A classifier labels malicious network flows. An agent then investigates a flagged flow with five
+          fixed tools and writes an assessment — and a verifier audits that assessment line by line against the
+          evidence the tools actually returned. On top of it sits a security-operations console: an endpoint
+          agent, an alert intake with a queue and a circuit breaker, a deterministic correlator, an
+          analyst-feedback loop that can train and promote a candidate model, a knowledge pack with BM25
+          retrieval, Sigma rules replayed against the corpus before they may be exported, and a dry-run
+          response planner with an approval queue.
+        </p>
+        <p class="lede">
+          The design rule that runs through all of it: <strong>no number appears unless a stored artifact
+          produced it</strong>, and a refusal is rendered as a refusal rather than as an empty screen.
+        </p>
+        <div class="rule-line mono">platform v1.4 &middot; built on <span class="mono">feature/soc-platform</span> &middot; localhost by design &middot; recorded 2026-10-29</div>
+        <div class="cta">
+          <a class="btn primary" href="/CyberAgent/">Open the console &rarr;</a>
+          <a class="btn" href="/CyberAgent/model-results">Model results route</a>
+          <a class="btn" href="/CyberAgent/simulation">Simulation route</a>
+        </div>
+      </header>
+
+      <section aria-labelledby="what-this-is">
+        <div class="panel notice">
+          <h2 id="what-this-is">Read this before you click around</h2>
+          <p>
+            This link is a <strong>static build with no backend behind it</strong>. There is no API here, no
+            database, no model file and no credential — the operator key that authorises the platform's 31
+            routes exists only in the owner's local <code>.env</code> and is attached by a dev server, so a
+            published copy of the frontend cannot reach it. What it can do is replay one. The six operator screens
+            that talk to the API read a <strong>recording of one real localhost run</strong>:
+            <code>scripts/capture_fixtures.py</code>
+            populated a scratch store through the same routes the browser uses, wrote each answer out byte for
+            byte, checked every recorded filter against the live server before keeping it, and replaced the
+            machine-identifying values with synthetic ones. The amber <em>Recorded data &mdash; no live API</em>
+            bar is not decoration; it is the honest label on a tape, and it is on the <strong>six</strong> screens
+            that read that tape (<code>/alerts</code>, <code>/incidents</code>, <code>/agents</code>,
+            <code>/response</code>, <code>/rules</code>, <code>/learning</code>). The other five keep the badges
+            they already had &mdash; <em>Demo data</em>, <em>Demo fixtures</em>, <em>Simulated &mdash; not live
+            traffic</em> &mdash; because they were never reading the API in the first place. Typing or bookmarking
+            <code>/alerts</code> in a browser reaches the alerts screen rather than a 404, because this address
+            answers an HTML request for a path it has no file at with the build's own entry point.
+          </p>
+          <div class="grid strip" style="margin-top: 14px">
+            <div class="stat"><b class="mono">6</b><span>screens replay recorded rows</span></div>
+            <div class="stat"><b class="mono">11 / 11</b><span>routes render, 0 page errors</span></div>
+            <div class="stat"><b class="mono">0</b><span>requests to <code>/api</code> from the page</span></div>
+            <div class="stat"><b class="mono">12</b><span>write or stream presses, all refused</span></div>
+            <div class="stat"><b class="mono">27</b><span>recorded files, 2.54 MB</span></div>
+            <div class="stat"><b class="mono">0</b><span>secrets in the bundle</span></div>
+          </div>
+          <p style="margin-top: 16px">
+            <span class="badge b-live">What the tape holds</span>
+            <strong>Alerts</strong> 480 stored rows (25 per page, with the whole-table aggregates beside them);
+            <strong>Incidents</strong> 143, of which 50 on the first page; <strong>Sentinels</strong> 1 enrolled
+            endpoint; <strong>Response</strong> 4 plans and 12 approval items with their decisions;
+            <strong>Rules</strong> the 49 packed Sentinel rules plus 3 generated Sigma rules with their replay
+            counts; <strong>Learning</strong> 23 analyst verdicts and 1 registered model version.
+            <strong>Model results</strong> reads the synced evaluation artifact, and <strong>Overview</strong>,
+            <strong>Simulation</strong> and <strong>Replay</strong> show bundled fixtures, each still carrying its
+            own amber badge.
+          </p>
+          <p>
+            <span class="badge b-refuse">Writes refuse, by name</span>
+            A recording has no store to change, so correlating, draining the queue, recovering leases,
+            replaying flows, planning, filing a verdict, recording a decision, drafting a plan or a rule and
+            starting an investigation each answer <code>static_recording</code> with the command that would make
+            that step move again. Twelve of those affordances were pressed in a real browser against
+            <strong>this published address</strong>, one page load each: every refusal named the exact route it
+            was refusing (<code>POST /queue/run</code>, <code>/queue/recover</code>,
+            <code>/alerts/replay-flows</code>, <code>/incidents/correlate</code>, <code>/models/retrain</code>,
+            <code>/feedback</code>, <code>/response/approvals/{id}/decision</code>,
+            <code>/incidents/inc-a3b458db83608445/plan</code>, the same <code>/rule</code>, and both
+            investigation streams), <strong>0 requests reached <code>/api</code></strong>, and no screen lost its
+            rows. The verdict button is inert until its required fields are filled, and refuses as soon as they
+            are. Exporting a generated rule is the exception that is not a refusal of mine: it answers the
+            <strong>409 the recording actually carried</strong> — the precision gate refused all three rules that
+            run produced, so the file is not on the tape and this page does not pretend it is.
+          </p>
+          <p>
+            <span class="badge b-artifact">What is real</span>
+            Every measurement on this page is copied from a stored artifact or a recorded run, and each table
+            names the file it came from. Nothing here was generated for the page.
+          </p>
+        </div>
+      </section>
+
+      <section aria-labelledby="classifier">
+        <h2 id="classifier">The classifier, on a held-out split</h2>
+        <p class="sub">
+          CIC-IDS2017 (reduced repository copy), stratified 70/15/15 at <code>random_state=42</code>. Five
+          supervised models trained on the same features; the winner is selected by
+          <em>highest macro F1 on the held-out test split</em>, not by accuracy.
+          From <code>artifacts/eval/evaluation.json</code>, generated 2026-10-26T07:35:04+00:00.
+        </p>
+        <div class="panel">
+          <table>
+            <caption>53,342 held-out flow records, 11 supervised classes. Times are measured per 1,000 samples.</caption>
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th class="num">Accuracy</th>
+                <th class="num">Macro F1</th>
+                <th class="num">F1 weighted</th>
+                <th class="num">Inference ms/1k</th>
+                <th class="num">Train s</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="best">
+                <td>LightGBM &nbsp;<span class="badge b-artifact">selected</span></td>
+                <td class="num">0.998894</td><td class="num">0.995273</td><td class="num">0.998898</td>
+                <td class="num">29.826</td><td class="num">11.28</td>
+              </tr>
+              <tr><td>XGBoost</td><td class="num">0.998800</td><td class="num">0.994342</td><td class="num">0.998804</td><td class="num">52.850</td><td class="num">35.35</td></tr>
+              <tr><td>Random Forest</td><td class="num">0.998238</td><td class="num">0.992681</td><td class="num">0.998251</td><td class="num">373.328</td><td class="num">5.63</td></tr>
+              <tr><td>MLP</td><td class="num">0.984346</td><td class="num">0.959242</td><td class="num">0.984431</td><td class="num">13.220</td><td class="num">64.74</td></tr>
+              <tr><td>Logistic Regression</td><td class="num">0.868640</td><td class="num">0.745218</td><td class="num">0.892425</td><td class="num">13.273</td><td class="num">33.61</td></tr>
+            </tbody>
+          </table>
+          <p class="sub" style="margin-top: 14px">
+            Diagonal check on the selected model: <span class="mono">53,283 / 53,342</span> correct
+            (<span class="mono">0.99889393</span>), recomputed from the stored confusion matrix — the build
+            script refuses to write the artifact when the diagonal, the macro F1 and the weighted scores disagree.
+          </p>
+          <h3>Per class, so accuracy cannot do the talking</h3>
+          <table>
+            <caption>LightGBM, held-out test split. Same artifact, <code>per_class.metrics</code>.</caption>
+            <thead>
+              <tr><th>Class</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th><th class="num">Support</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>BENIGN</td><td class="num">0.999863</td><td class="num">0.998765</td><td class="num">0.999314</td><td class="num">29,158</td></tr>
+              <tr><td>DDoS</td><td class="num">0.999867</td><td class="num">1.000000</td><td class="num">0.999933</td><td class="num">7,500</td></tr>
+              <tr><td>DoS Hulk</td><td class="num">0.998594</td><td class="num">0.998594</td><td class="num">0.998594</td><td class="num">5,691</td></tr>
+              <tr><td>PortScan</td><td class="num">0.997961</td><td class="num">1.000000</td><td class="num">0.998979</td><td class="num">5,872</td></tr>
+              <tr><td>DoS GoldenEye</td><td class="num">0.994835</td><td class="num">0.998704</td><td class="num">0.996766</td><td class="num">1,543</td></tr>
+              <tr><td>DoS Slowhttptest</td><td class="num">0.991117</td><td class="num">0.996173</td><td class="num">0.993639</td><td class="num">784</td></tr>
+              <tr><td>DoS slowloris</td><td class="num">0.996278</td><td class="num">0.995043</td><td class="num">0.995660</td><td class="num">807</td></tr>
+              <tr><td>FTP-Patator</td><td class="num">1.000000</td><td class="num">0.998876</td><td class="num">0.999438</td><td class="num">890</td></tr>
+              <tr><td>SSH-Patator</td><td class="num">1.000000</td><td class="num">0.997930</td><td class="num">0.998964</td><td class="num">483</td></tr>
+              <tr><td>Web Attack</td><td class="num">1.000000</td><td class="num">0.996885</td><td class="num">0.998440</td><td class="num">321</td></tr>
+              <tr><td>Bot</td><td class="num">0.947712</td><td class="num">0.989761</td><td class="num">0.968280</td><td class="num">293</td></tr>
+            </tbody>
+          </table>
+          <h3>The zero-day holdout, kept visible</h3>
+          <p>
+            47 flows of two classes no supervised model here has ever seen — <em>Heartbleed</em> and
+            <em>Infiltration</em>. All 47 were predicted <em>BENIGN</em>. Accuracy
+            <span class="mono">0.0</span> and macro F1 <span class="mono">0.0</span> for all five models. A
+            supervised classifier cannot label a class outside its label set, and the artifact records that
+            rather than hiding it.
+          </p>
+          <h3>What the artifact itself says about these numbers</h3>
+          <ul>
+            <li>Held-out CIC-IDS2017 split; day-to-day drift means these numbers are not real-world generalisation.</li>
+            <li>Severe class imbalance (BENIGN dominates), so accuracy overstates attack performance; macro F1 and per-class metrics are the load-bearing numbers.</li>
+            <li>The split was stratified at random per flow rather than by capture day, so same-day near-duplicate flows can appear in train and test.</li>
+            <li>Per-sample predicted probabilities and split indices were not persisted; regenerating them requires re-running preprocessing and evaluation.</li>
+            <li>Precision-recall curves are for the selected best model only.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section aria-labelledby="chain">
+        <h2 id="chain">The console, and what decides each step</h2>
+        <p class="sub">
+          Nine stages, each with a rule that names the constant behind its output. The two load-bearing
+          choices: <strong>no model and no LLM decides the grouping</strong> or <strong>the response</strong>,
+          and <strong>the classifier's label is never overridden by the narrative</strong>.
+        </p>
+        <div class="panel">
+          <div class="flow">
+            <div><b>1 &middot; Endpoint agent</b><span>A Wazuh-style agent observes logs, processes, the network table, file hashes and inventory, and POSTs to the manager. No inbound listener, no command channel. 49 detection rules in 7 YAML files, levels 0&ndash;14; a rule whose field is not in the readable vocabulary is refused at load.</span></div>
+            <div><b>2 &middot; Classify &amp; triage</b><span>Flows through the selected model; severity comes from a fixed class&ndash;severity table, not from a learned score.</span></div>
+            <div><b>3 &middot; Intake &amp; queue</b><span>One write door: provenance check, dedupe by content hash, store, triage, enqueue. Leased workers, an attempt budget, stale-lease recovery, a circuit breaker, and 100 jobs per request as the hard cap.</span></div>
+            <div><b>4 &middot; Correlate</b><span>Entities are <code>host:</code>, <code>ip:</code>, <code>user:</code> only; wildcard addresses correlate nothing. Union-find over link keys, a stable <code>inc-&hellip;</code> id. Severity = weight &times; alert count &times; mean confidence &times; (1 + duration/3600), escalation only against the archetype floor.</span></div>
+            <div><b>5 &middot; Investigate &amp; verify</b><span>Five fixed tools, <code>MAX_TOOL_CALLS = 6</code>, re-reading and re-scoring the stored row before any tool runs. The verifier audits 6 claims on a flow subject and 11 on an incident subject, and the investigation adds a line naming exactly why no LLM answered.</span></div>
+            <div><b>6 &middot; Analyst feedback</b><span>A verdict is data: it never mutates a stored label. A <code>confirmed</code> verdict takes the <em>dataset</em> label, never the model's prediction, so a wrong prediction cannot be baked back in.</span></div>
+            <div><b>7 &middot; Retrain &amp; promote</b><span>Guards before any training (5 verdicts minimum, 25 per class, a 5% relabel share, 5,000 scanned). The train split is re-labelled, never extended; the test split is never touched. Promotion re-derives the gate from the candidate's own confusion matrix at a 0.002 tolerance.</span></div>
+            <div><b>8 &middot; Knowledge &amp; rules</b><span>56 MITRE techniques in a hand-curated offline pack; retrieval is BM25, in-process, no embeddings, no network. A Sigma rule is generated only from values a stored row carries, replayed against 389,616 labelled flows, and export is refused while the row is not <code>validated</code>.</span></div>
+            <div><b>9 &middot; Respond (dry-run)</b><span><code>DRY_RUN</code> is the only mode and it is not a setting. The module holds no firewall, router, EDR or ticketing client and no credential for one; a test reads its source and refuses the moment an outbound-capable import or call appears.</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="correlation">
+        <h2 id="correlation">Correlation, measured against known groups</h2>
+        <p class="sub">
+          From <code>artifacts/correlation/benchmark.json</code>, generated 2026-10-27T21:40:32+00:00 by
+          <code>uv run --no-sync python -m scripts.correlation_benchmark --flows 120 --rate 40</code>. Eight runs
+          across two corpora and four time windows; every rate is re-derived from the contingency table stored in
+          the same file before it is written, and <code>all_repeats_identical: true</code>.
+        </p>
+        <div class="panel">
+          <table>
+            <caption>Purity = of the pairs the grouping joined, how many belong to one true group. Coverage = of the pairs that belong together, how many the grouping joined.</caption>
+            <thead>
+              <tr><th>Corpus</th><th class="num">Window</th><th class="num">Alerts</th><th class="num">Incidents</th><th class="num">Purity</th><th class="num">Coverage</th><th class="num">Pair F1</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>flow episodes</td><td class="num">60 s</td><td class="num">120</td><td class="num">84</td><td class="num">0.9950</td><td class="num">0.3972</td><td class="num">0.5678</td></tr>
+              <tr><td>flow episodes</td><td class="num">300 s</td><td class="num">120</td><td class="num">71</td><td class="num">0.9910</td><td class="num">0.6561</td><td class="num">0.7895</td></tr>
+              <tr class="best"><td>flow episodes</td><td class="num">900 s</td><td class="num">120</td><td class="num">56</td><td class="num">0.9200</td><td class="num">0.7727</td><td class="num">0.8400</td></tr>
+              <tr><td>flow episodes</td><td class="num">3600 s</td><td class="num">120</td><td class="num">43</td><td class="num">0.7698</td><td class="num">0.7866</td><td class="num">0.7781</td></tr>
+              <tr><td>host stories</td><td class="num">60 s</td><td class="num">180</td><td class="num">22</td><td class="num">0.5876</td><td class="num">0.3360</td><td class="num">0.4276</td></tr>
+              <tr><td>host stories</td><td class="num">300 s</td><td class="num">180</td><td class="num">18</td><td class="num">0.4834</td><td class="num">0.3972</td><td class="num">0.4361</td></tr>
+              <tr><td>host stories</td><td class="num">900 s</td><td class="num">180</td><td class="num">18</td><td class="num">0.4834</td><td class="num">0.3972</td><td class="num">0.4361</td></tr>
+              <tr><td>host stories</td><td class="num">3600 s</td><td class="num">180</td><td class="num">18</td><td class="num">0.4834</td><td class="num">0.3972</td><td class="num">0.4361</td></tr>
+            </tbody>
+          </table>
+          <p class="sub" style="margin-top: 14px">
+            The 0.9200 / 0.8400 pair on the flow corpus is the headline. The <strong>0.4834 purity on host
+            events is the honest weak number</strong>: unrelated campaigns touch the same endpoint, so an
+            entity key joins alerts that belong to different stories. It is a documented limit of the feed, not
+            a tuning target — three priced alternatives are recorded and undecided.
+          </p>
+          <p class="sub">
+            The benchmark's own disclosure, quoted: <em>"Simulated: every alert measured here was manufactured in
+            this process by the scripted attack stories and a seeded flow replay. No live traffic, no real
+            endpoint."</em>
+          </p>
+        </div>
+      </section>
+
+      <section aria-labelledby="screens">
+        <h2 id="screens">Eleven screens, captured against the running platform</h2>
+        <p class="sub">
+          Captured 2026-10-29 with a real Chromium driven over <strong>this same package</strong> — the files
+          this page links to, served from disk with no API anywhere — so each screen below is what a visitor
+          opens. The rows it renders were recorded from one localhost run of the platform. Each caption names
+          what the screen reads and whether it is a recorded row, a bundled fixture or a synced artifact.
+        </p>
+        <div class="grid shots">
+          <figure>
+            <a class="shotlink" href="/CyberAgent/case-study/00-overview.png">
+              <img class="shot" src="/CyberAgent/case-study/00-overview.png" alt="Overview screen: flow-alert metric cards above an intake table" loading="lazy" width="1440" height="1206" />
+            </a>
+            <figcaption><b>Overview</b> <span class="badge b-fixture">Demo data</span><br />
+              <span class="mono">/</span> — the flow-alert metric cards and the intake table read bundled fixtures, each still carrying its amber badge. Wiring them to <code>GET /alerts</code> counts is the one remaining frontend task.
+              <span class="full">Opens the full capture, 1440 &times; 1206.</span></figcaption>
+          </figure>
+          <figure>
+            <a class="shotlink" href="/CyberAgent/case-study/01-alerts.png">
+              <img class="shot" src="/CyberAgent/case-study/01-alerts.png" alt="Alerts screen: 25 recorded alert rows with filters beside queue statistics" loading="lazy" width="1440" height="3148" />
+            </a>
+            <figcaption><b>Alerts &amp; queue</b> <span class="badge b-fixture">Recorded rows</span><br />
+              <span class="mono">GET /alerts</span> and <span class="mono">GET /queue/stats</span> — 25 of 480 stored alerts on this page, with <strong>whole-table</strong> counts beside them and the screen saying which is which. Breaker state and worker capacity come from the same recording; the drain, recover and replay buttons answer a refusal by name.
+              <span class="full">Opens the full capture, 1440 &times; 3148.</span></figcaption>
+          </figure>
+          <figure>
+            <a class="shotlink" href="/CyberAgent/case-study/02-incidents.png">
+              <img class="shot" src="/CyberAgent/case-study/02-incidents.png" alt="Incidents screen: a table of correlated incidents with severity badges" loading="lazy" width="1440" height="3973" />
+            </a>
+            <figcaption><b>Incidents</b> <span class="badge b-fixture">Recorded rows</span><br />
+              <span class="mono">GET /incidents</span> — 50 of the 143 incidents that one deterministic correlation pass produced. Opening a row re-reads and re-scores the stored record; a row that disagrees with its own alerts would answer HTTP 409 on the live route, and this one shows the disagreement rather than a score it cannot stand behind.
+              <span class="full">Opens the full capture, 1440 &times; 3973.</span></figcaption>
+          </figure>
+          <figure>
+            <a class="shotlink" href="/CyberAgent/case-study/03-agents.png">
+              <img class="shot" src="/CyberAgent/case-study/03-agents.png" alt="Agents screen: one enrolled endpoint agent named demo-sentinel on host soc-demo-host" loading="lazy" width="1440" height="1000" />
+            </a>
+            <figcaption><b>Endpoint agents</b> <span class="badge b-fixture">Recorded rows</span><br />
+              <span class="mono">GET /agents</span> — one enrolled endpoint, and nothing about it identifies a person or a machine: the capture replaced the hostname, the address and any account name with synthetic values before writing the tape, and a scan of the package refuses to publish if a real one survives. <strong>No cell is redacted in this copy, because nothing here needed redacting.</strong>
+              <span class="full">Opens the full capture, 1440 &times; 1000.</span></figcaption>
+          </figure>
+          <figure>
+            <a class="shotlink" href="/CyberAgent/case-study/04-response.png">
+              <img class="shot" src="/CyberAgent/case-study/04-response.png" alt="Response screen: four dry-run plans and twelve approval items with their decisions" loading="lazy" width="1440" height="2612" />
+            </a>
+            <figcaption><b>Response &amp; approvals</b> <span class="badge b-fixture">Recorded rows</span><br />
+              <span class="mono">GET /response/plans</span>, <span class="mono">GET /response/approvals</span> — 4 plans and 12 approval items, each target a value read off the incident's own member alerts, each with the sentence describing what <em>would</em> have happened. Nothing was executed; there is nothing here that could be.
+              <span class="full">Opens the full capture, 1440 &times; 2612.</span></figcaption>
+          </figure>
+          <figure>
+            <a class="shotlink" href="/CyberAgent/case-study/05-rules.png">
+              <img class="shot" src="/CyberAgent/case-study/05-rules.png" alt="Rules screen: the packed detection rules and the generated Sigma set with replay counts" loading="lazy" width="1440" height="7657" />
+            </a>
+            <figcaption><b>Rules</b> <span class="badge b-fixture">Recorded rows</span><br />
+              <span class="mono">GET /rules</span>, <span class="mono">GET /rules/sigma</span> — the 49 packed Sentinel rules and the 3 rules generated live from stored incidents, each with its replay counts. All three read <em>unvalidated</em>: the precision gate refused them, so the export button on this page answers the HTTP 409 the recording actually carries, counts and all.
+              <span class="full">Opens the full capture, 1440 &times; 7657.</span></figcaption>
+          </figure>
+          <figure>
+            <a class="shotlink" href="/CyberAgent/case-study/06-learning.png">
+              <img class="shot" src="/CyberAgent/case-study/06-learning.png" alt="Learning screen: analyst verdicts, rule tuning and the model registry" loading="lazy" width="1440" height="3807" />
+            </a>
+            <figcaption><b>Learning</b> <span class="badge b-fixture">Recorded rows</span><br />
+              <span class="mono">GET /feedback</span>, <span class="mono">GET /models</span> — 23 analyst verdicts, the rule-tuning view they feed, and 1 registered model version shown as three separate records: registered, pointed-at, and actually served. The dry-run retrain button refuses here; promotion is a different route and was never called.
+              <span class="full">Opens the full capture, 1440 &times; 3807.</span></figcaption>
+          </figure>
+          <figure>
+            <a class="shotlink" href="/CyberAgent/case-study/07-investigation.png">
+              <img class="shot" src="/CyberAgent/case-study/07-investigation.png" alt="Investigation screen: the legacy flow stream refusing to start, with its panels empty and labelled" loading="lazy" width="1440" height="1280" />
+            </a>
+            <figcaption><b>Investigation</b> <span class="badge b-refuse">Stream refused</span><br />
+              <span class="mono">POST /investigate</span> over SSE — the one screen that cannot replay, because an investigation runs the five tools against the live classifier rather than reading a stored row. It says so in its own words and points at the reports the recorded run <em>did</em> store, which are on the Alerts and Incidents screens. A run captured live over the localhost stack is on record in <code>docs/testing.md</code>.
+              <span class="full">Opens the full capture, 1440 &times; 1280.</span></figcaption>
+          </figure>
+          <figure>
+            <a class="shotlink" href="/CyberAgent/case-study/08-model-results.png">
+              <img class="shot" src="/CyberAgent/case-study/08-model-results.png" alt="Model results screen: evaluation artifact tables and curves" loading="lazy" width="1440" height="3635" />
+            </a>
+            <figcaption><b>Model results</b> <span class="badge b-live">From the artifact</span><br />
+              <span class="mono">/model-results</span> — no API route serves this data, recorded or otherwise. The build step re-derives every metric from the confusion matrix and refuses to write when the diagonal and the scores disagree, so this screen cannot display a figure the model did not produce.
+              <span class="full">Opens the full capture, 1440 &times; 3635.</span></figcaption>
+          </figure>
+          <figure>
+            <a class="shotlink" href="/CyberAgent/case-study/09-simulation.png">
+              <img class="shot" src="/CyberAgent/case-study/09-simulation.png" alt="Simulation screen: a network topology wargame with a timeline scrubber" loading="lazy" width="1440" height="1865" />
+            </a>
+            <figcaption><b>Simulation</b> <span class="badge b-live">Playable here</span><br />
+              <span class="mono">/simulation</span> — a seeded, rule-based attacker/defender engine that runs entirely in the browser, labelled <em>Simulated — not live traffic</em>. Replay state always derives from the step log, so scrubbing stays consistent; space plays, arrows step.
+              <span class="full">Opens the full capture, 1440 &times; 1865.</span></figcaption>
+          </figure>
+          <figure>
+            <a class="shotlink" href="/CyberAgent/case-study/10-replay.png">
+              <img class="shot" src="/CyberAgent/case-study/10-replay.png" alt="Replay screen: five static flow replay fixtures" loading="lazy" width="1440" height="1059" />
+            </a>
+            <figcaption><b>Replay</b> <span class="badge b-fixture">Demo fixtures</span><br />
+              <span class="mono">/replay</span> — five static fixtures describing seeded replay runs. The real replay is a command against a running API, and the first line of its summary is the disclosure that the traffic is simulated.
+              <span class="full">Opens the full capture, 1440 &times; 1059.</span></figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section aria-labelledby="verification">
+        <h2 id="verification">The verification record</h2>
+        <p class="sub">The gate run recorded for this project on 2026-10-29, with this package's recorded demo
+          build in place of the plain one. Every row except the demo run was re-executed for this page.</p>
+        <div class="panel">
+          <table>
+            <thead><tr><th>Gate</th><th>Result</th><th>Note</th></tr></thead>
+            <tbody>
+              <tr><td><code>uv run pytest -q</code></td><td class="mono">2027 passed, 31 skipped in 48.20 s</td><td>The 31 skips are the <code>db</code>-marked PostgreSQL legs — no password in this environment.</td></tr>
+              <tr><td><code>uv run ruff check src scripts tests</code></td><td class="mono">clean</td><td>One pre-existing Starlette <code>TestClient</code> deprecation warning in the suite output.</td></tr>
+              <tr><td><code>npm test</code></td><td class="mono">103 passed in 9 files (274 ms)</td><td>Includes a test that reads all 68 shipped sources and refuses any browser store, header name or secret read, and 22 that fold the recorded tape and compare it to the capture's own manifest.</td></tr>
+              <tr><td><code>npx tsc -b --force</code> / <code>npm run lint</code></td><td class="mono">exit 0 / 0 warnings, 0 errors</td><td>oxlint across 81 files.</td></tr>
+              <tr><td><code>npm run build</code></td><td class="mono">1,075.54 kB (gzip 261.09 kB)</td><td>One chunk, plus a 2.54 MB recorded tape under <code>/demo</code>. Code-splitting is an open item, and the bundle is scanned for the key value, its prefix and the header name: not present.</td></tr>
+              <tr><td><code>uv run python scripts/build_showcase.py</code></td><td class="mono">publishable, 0 findings</td><td>Assembles the 44-file package and scans every text file in it for 12 values that would identify this machine or its owner; a finding blocks publication.</td></tr>
+              <tr><td>Chromium over the package, then over this published address</td><td class="mono">11 / 11 routes, 0 API calls, 0 page errors</td><td>Eleven screenshots captured from the built package, then OCR-scanned for the same 12 values: clean. The same walk re-run against the published URL renders the recorded rows there too. Twelve write or stream affordances, each pressed on its own page load, every one refused by name.</td></tr>
+              <tr><td><code>uv run python scripts/run_demo.py</code></td><td class="mono">14 / 14 checks, exit 0</td><td>Twelve steps over the whole chain against a scratch Mongo database, which was dropped afterwards. Carried from the earlier gate on the same date; this change touches no backend path.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="limits">
+        <h2 id="limits">What is not true here</h2>
+        <p class="sub">Every one of these is a recorded limitation, not a claim this page works around.</p>
+        <div class="panel">
+          <ul>
+            <li><strong>No live LLM.</strong> Both configured backends — an OpenAI-compatible endpoint and Ollama — refused the connection when measured, so the backend is <code>mock</code>. Every investigation to date is the deterministic report with the reason named in its limitations, and live-LLM narrative quality is unbenchmarked.</li>
+            <li><strong>The SQL legs have never run.</strong> PostgreSQL is present but unusable without a password, so rows fall back to in-memory repositories, <code>GET /health</code> answers <code>degraded</code>, and every table added since Phase 1 has never been exercised against a real server.</li>
+            <li><strong>The platform itself is not deployed.</strong> What is published is a recording of one localhost run of it: no API, no store, no model file and no credential ever left the owner's machine. In-memory rows live only as long as the process that made them, so a freshly started API here reads empty lists until something ingests — which is exactly why the tape was captured from a process that had already run the whole chain. The platform binds localhost and listens on nothing inbound.</li>
+            <li><strong>A recording is one run, frozen.</strong> The six tape-backed screens all read a single scratch-store pass on 2026-10-29, so the counts are that run's counts and never move: correlating again, draining the queue or filing a verdict cannot change them, because a recording has no store to change. The other five do not move either, for different reasons &mdash; <code>/model-results</code> renders the synced evaluation artifact, <code>/</code>, <code>/replay</code> and <code>/simulation</code> are bundled fixtures and a browser-side engine, and <code>/investigation</code> has nothing to show a static build. The whole-table aggregates beside a filtered page are whole-table <em>over that run</em>. Machine-identifying values were replaced with synthetic ones before the tape was written, so the hostnames, addresses and account names on these screens are invented; the CIC-IDS2017 flow addresses are not, because they belong to the published dataset.</li>
+            <li><strong>The rule gate is precision-only.</strong> The rule generated live from a <em>Bot</em> incident passed with precision 1.0 on one true positive against 1,965 missed ones (recall 0.0005: <span class="mono">tp=1 fp=0 fn=1965 tn=387650</span>) and is exportable, while a 27-alert host rule reads precision 0.0 and is refused. Recall is published and never enforced. Three priced alternatives are on record, undecided.</li>
+            <li><strong>Exported rules are unverified by any sensor.</strong> <code>exportable: true</code> means "this project replayed it and the numbers agree". No export has been loaded by pySigma or a real Sigma sensor. And a host rule's truth is <em>another rule's verdict</em>, not the machine's state.</li>
+            <li><strong>An analyst verdict can reach 91.27% of the flows.</strong> 34,003 of the 389,616 addressable flows (8.73%) never entered the retrain corpus — 33,956 removed by duplicate-row cleaning plus the 47 holdout rows — class-skewed up to 45.4% of <em>SSH-Patator</em>.</li>
+            <li><strong>Promotion has only ever run on a scratch database.</strong> The project's own store has never had its active-model pointer moved.</li>
+            <li><strong>Two severity systems disagree, knowingly.</strong> The review-policy list predates the severity table, so a <em>DoS Hulk</em> alert reads high severity yet needs no human review. The two-line fix is deferred because it changes analyst workload.</li>
+            <li><strong>The knowledge pack is a hand-curated subset.</strong> 56 techniques with paraphrased descriptions, not verbatim ATT&amp;CK; its own provenance block says <code>fetched: false</code>, and technique URLs are derived from the id rather than stored.</li>
+            <li><strong>Host-event purity is 0.4834</strong> for the reason given above, and the frontend has no render-level test suite — no jsdom, no testing-library, no Playwright flow. The screens are proven by typed-client tests, a source scan and a hand pass.</li>
+            <li><strong>There is no React error boundary.</strong> A component that throws during render blanks the view; the defensive readers in <code>lib/socView.ts</code> are the mitigation in use, and they only help where a view calls them.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section aria-labelledby="run">
+        <h2 id="run">How it actually runs</h2>
+        <p class="sub">
+          Three terminals on one machine, and the whole chain is reproducible. There is no <code>make</code>
+          here, so the underlying commands are given.
+        </p>
+        <div class="panel">
+<pre># 1. the API (Python 3.13 through uv)
+uv run python scripts/tasks.py run-api
+
+# 2. the console - its dev proxy attaches the operator key from .env, so no screen asks for it
+uv run python scripts/tasks.py run-ui
+
+# 3. the end-to-end demonstration: enroll, deliver the scripted campaigns, replay 120 flows,
+#    run the queue, correlate, investigate, file feedback, plan a dry-run response, decide it
+uv run python scripts/run_demo.py --flows 120 --seed 42 --verbose
+
+# the correlation measurement, and the Sigma rule replay
+uv run python -m scripts.correlation_benchmark --flows 120 --rate 40
+uv run python -m scripts.replay_flows --flows 200 --rate 60 --investigate
+
+# every gate
+uv run pytest -q
+uv run ruff check src scripts tests
+cd frontend &amp;&amp; npm test &amp;&amp; npm run lint &amp;&amp; npm run build
+
+# and, for this published copy: record one run's answers, scrub them, fold-check them, assemble
+uv run python -m scripts.capture_fixtures --url http://127.0.0.1:8011
+uv run python scripts/build_showcase.py</pre>
+          <p class="sub" style="margin-top: 14px">
+            The scripted attack stories and the flow replay mark every event and every derived alert
+            <code>is_simulated=true</code>. They are training-wheel data for the console, not evidence about any
+            network. The capture refuses to write a filter it could not reproduce against the live route, and
+            the assembler refuses to publish a package that still carries a value identifying this machine.
+          </p>
+        </div>
+      </section>
+
+      <footer>
+        <p>
+          Academic case study, AUCML TE7483 (End-of-Semester project), solo. Dataset: CIC-IDS2017, reduced
+          repository copy — 389,616 flow records after preprocessing, 53,342 of them held out for testing.
+          Static deployment built from <code>frontend/dist</code>; the source, its tests and its full decision
+          record stay on the owner's machine.
+        </p>
+        <p>
+          This page contains no credential, no hostname, no username and no local path, and neither do the
+          screenshots on it: the values that would have carried them were replaced with synthetic ones before
+          the recording was written, and both the package and the pixels were scanned afterwards for the twelve
+          that identify this machine or its owner. Nothing was cropped or blacked out to make that true.
+        </p>
+      </footer>
+    </div>
+  </body>
+</html>

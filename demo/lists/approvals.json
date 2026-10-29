@@ -1,0 +1,207 @@
+{
+ "approvals": [
+  {
+   "action": {
+    "action": "open_ticket",
+    "rationale": "a live channel means something on the host is holding it open, and what that something is stays a question for the host itself. Target SIM-BOX was read from the incident's own alerts (alert-177453acf3cf7f5a, alert-181e77b955c9d191, alert-342990763c626a40, alert-38001d32a94c64a2, alert-38632a7a638ce11c and 15 more).",
+    "target": "SIM-BOX"
+   },
+   "approval_id": "apr-947095aa3315d2bf",
+   "decided_at": "2026-10-29T08:44:51.726958Z",
+   "decided_by": "operator",
+   "dry_run_result": "DRY_RUN plan-b8c773731560dba6 (inc-7ef5dc6d172eefbc) - open_ticket on SIM-BOX was approved. The system that would have had to obey it: a ticketing system that is not deployed here; the ticket text is written, the ticket is not filed. Nothing was sent, nothing was changed and nothing was blocked: this process holds no client for that channel. This incident is simulated traffic, so the target names a scripted value, not a machine on any network.",
+   "plan_id": "plan-b8c773731560dba6",
+   "requested_at": "2026-10-29T08:44:51.707832Z",
+   "requested_by": "operator",
+   "state": "approved"
+  },
+  {
+   "action": {
+    "action": "block_ip",
+    "rationale": "this destination is where the sessions went, it repeats across the incident's member flows, and stopping it severs the channel while the host stays reachable for the investigation. Target 203.0.113.19 was read from the incident's own alerts (alert-342990763c626a40, alert-38632a7a638ce11c, alert-3d81bb23d911854d, alert-51d18d3a61a13f1f, alert-72b76142ff166248 and 2 more).",
+    "target": "203.0.113.19"
+   },
+   "approval_id": "apr-c2e6ef14ea05b68d",
+   "decided_at": "2026-10-29T08:44:51.742558Z",
+   "decided_by": "operator",
+   "dry_run_result": "DRY_RUN plan-b8c773731560dba6 (inc-7ef5dc6d172eefbc) - block_ip on 203.0.113.19 was rejected. The system that would have had to obey it: an upstream firewall or router ACL, which this platform has no address, credential or client for. Nothing was sent, nothing was changed and nothing was blocked: this process holds no client for that channel. This incident is simulated traffic, so the target names a scripted value, not a machine on any network.",
+   "plan_id": "plan-b8c773731560dba6",
+   "requested_at": "2026-10-29T08:44:51.707828Z",
+   "requested_by": "operator",
+   "state": "rejected"
+  },
+  {
+   "action": {
+    "action": "block_ip",
+    "rationale": "this destination is where the sessions went, it repeats across the incident's member flows, and stopping it severs the channel while the host stays reachable for the investigation. Target 10.0.0.41 was read from the incident's own alerts (alert-177453acf3cf7f5a, alert-181e77b955c9d191, alert-405697baf72f4470, alert-953c35ba84a10d7d, alert-d95c794860458dde and 6 more).",
+    "target": "10.0.0.41"
+   },
+   "approval_id": "apr-9e480bbc711c63df",
+   "decided_at": null,
+   "decided_by": null,
+   "dry_run_result": null,
+   "plan_id": "plan-b8c773731560dba6",
+   "requested_at": "2026-10-29T08:44:51.707823Z",
+   "requested_by": "operator",
+   "state": "pending"
+  },
+  {
+   "action": {
+    "action": "rate_limit",
+    "rationale": "this source is what the stored rows measured as the flood's origin, and throttling it is undone with one command if the address turns out to be spoofed or a load balancer. Target 172.16.0.1 was read from the incident's own alerts (alert-flow-109842-DDoS, alert-flow-119484-DDoS, alert-flow-129303-DDoS, alert-flow-138873-DDoS, alert-flow-138966-DDoS and 30 more).",
+    "target": "172.16.0.1"
+   },
+   "approval_id": "apr-07d60ddf6ba6113c",
+   "decided_at": null,
+   "decided_by": null,
+   "dry_run_result": null,
+   "plan_id": "plan-19f50388649e25fd",
+   "requested_at": "2026-10-29T08:44:51.690801Z",
+   "requested_by": "operator",
+   "state": "pending"
+  },
+  {
+   "action": {
+    "action": "open_ticket",
+    "rationale": "a credential-access incident usually means one account was guessed before the guessing stopped, so somebody has to look at what that account did - which is a person's judgement, not a rule. Target SIM-DC01 was read from the incident's own alerts (alert-08a32a182221caf6, alert-14de9e9159c2ee47, alert-23de461c0135b4aa, alert-497b806bef85f88a, alert-4c736e449337fe48 and 21 more).",
+    "target": "SIM-DC01"
+   },
+   "approval_id": "apr-a6852fa3aabb54fd",
+   "decided_at": null,
+   "decided_by": null,
+   "dry_run_result": null,
+   "plan_id": "plan-c0a97cf7a3ec56e8",
+   "requested_at": "2026-10-29T08:44:51.673209Z",
+   "requested_by": "operator",
+   "state": "pending"
+  },
+  {
+   "action": {
+    "action": "block_ip",
+    "rationale": "this source address carried the attempts, and a burst from one address against several accounts is the shape the flow model and the authentication rules both reported. Target 198.51.100.0 was read from the incident's own alerts (alert-b205de002b9021b9).",
+    "target": "198.51.100.0"
+   },
+   "approval_id": "apr-b6e90bab356a20af",
+   "decided_at": null,
+   "decided_by": null,
+   "dry_run_result": null,
+   "plan_id": "plan-c0a97cf7a3ec56e8",
+   "requested_at": "2026-10-29T08:44:51.673206Z",
+   "requested_by": "operator",
+   "state": "pending"
+  },
+  {
+   "action": {
+    "action": "block_ip",
+    "rationale": "this source address carried the attempts, and a burst from one address against several accounts is the shape the flow model and the authentication rules both reported. Target 198.51.100.3 was read from the incident's own alerts (alert-afb4e3e1c5439447, alert-e81e902d49622acc).",
+    "target": "198.51.100.3"
+   },
+   "approval_id": "apr-9a2373865358338d",
+   "decided_at": null,
+   "decided_by": null,
+   "dry_run_result": null,
+   "plan_id": "plan-c0a97cf7a3ec56e8",
+   "requested_at": "2026-10-29T08:44:51.673203Z",
+   "requested_by": "operator",
+   "state": "pending"
+  },
+  {
+   "action": {
+    "action": "block_ip",
+    "rationale": "this source address carried the attempts, and a burst from one address against several accounts is the shape the flow model and the authentication rules both reported. Target 203.0.113.60 was read from the incident's own alerts (alert-08a32a182221caf6, alert-14de9e9159c2ee47, alert-23de461c0135b4aa, alert-497b806bef85f88a, alert-4e7a0e9ac47a19a1 and 15 more).",
+    "target": "203.0.113.60"
+   },
+   "approval_id": "apr-ddf29bc591c8dee7",
+   "decided_at": null,
+   "decided_by": null,
+   "dry_run_result": null,
+   "plan_id": "plan-c0a97cf7a3ec56e8",
+   "requested_at": "2026-10-29T08:44:51.673200Z",
+   "requested_by": "operator",
+   "state": "pending"
+  },
+  {
+   "action": {
+    "action": "disable_account",
+    "rationale": "the incident's own member alerts name this account in failed or unusual logons, so the account is what the guesser is aiming at; the directory has to be asked by someone with credentials, and this platform has none. Target jai was read from the incident's own alerts (alert-4d81a11657288337, alert-4e7a0e9ac47a19a1, alert-ae0a270f1b38d851).",
+    "target": "jai"
+   },
+   "approval_id": "apr-19ab386ccbd3abaf",
+   "decided_at": null,
+   "decided_by": null,
+   "dry_run_result": null,
+   "plan_id": "plan-c0a97cf7a3ec56e8",
+   "requested_at": "2026-10-29T08:44:51.673196Z",
+   "requested_by": "operator",
+   "state": "pending"
+  },
+  {
+   "action": {
+    "action": "disable_account",
+    "rationale": "the incident's own member alerts name this account in failed or unusual logons, so the account is what the guesser is aiming at; the directory has to be asked by someone with credentials, and this platform has none. Target intern-09 was read from the incident's own alerts (alert-4fd71a29d670eed8, alert-a462c24b2074ba6a, alert-a527410064265a23).",
+    "target": "intern-09"
+   },
+   "approval_id": "apr-47fbf8f1d74d55f0",
+   "decided_at": null,
+   "decided_by": null,
+   "dry_run_result": null,
+   "plan_id": "plan-c0a97cf7a3ec56e8",
+   "requested_at": "2026-10-29T08:44:51.673192Z",
+   "requested_by": "operator",
+   "state": "pending"
+  },
+  {
+   "action": {
+    "action": "disable_account",
+    "rationale": "the incident's own member alerts name this account in failed or unusual logons, so the account is what the guesser is aiming at; the directory has to be asked by someone with credentials, and this platform has none. Target administrator was read from the incident's own alerts (alert-14de9e9159c2ee47, alert-4c736e449337fe48, alert-51416873e59027fb, alert-afb4e3e1c5439447, alert-b205de002b9021b9 and 3 more).",
+    "target": "administrator"
+   },
+   "approval_id": "apr-74f514878ea920e7",
+   "decided_at": null,
+   "decided_by": null,
+   "dry_run_result": null,
+   "plan_id": "plan-c0a97cf7a3ec56e8",
+   "requested_at": "2026-10-29T08:44:51.673187Z",
+   "requested_by": "operator",
+   "state": "pending"
+  },
+  {
+   "action": {
+    "action": "rate_limit",
+    "rationale": "this source is what the stored rows measured as the flood's origin, and throttling it is undone with one command if the address turns out to be spoofed or a load balancer. Target 172.16.0.1 was read from the incident's own alerts (alert-flow-10211-DoS_Hulk, alert-flow-104248-DoS_Hulk, alert-flow-105461-DoS_Hulk, alert-flow-110615-DoS_Hulk, alert-flow-112886-DoS_Hulk and 34 more).",
+    "target": "172.16.0.1"
+   },
+   "approval_id": "apr-7e5004f0c1b1b60e",
+   "decided_at": null,
+   "decided_by": null,
+   "dry_run_result": null,
+   "plan_id": "plan-ba25dc748c4b5c84",
+   "requested_at": "2026-10-29T08:09:53.737341Z",
+   "requested_by": "operator",
+   "state": "pending"
+  }
+ ],
+ "capability": "Dry run only. This platform holds no firewall, router, reverse-proxy, directory, endpoint-management or ticketing client, no credential for one, and the Sentinel agent has no command channel, so there is no code path from an approved action to a change. An approval is a work order for a person.",
+ "count": 12,
+ "counts_by": {
+  "state": {
+   "approved": 1,
+   "pending": 10,
+   "rejected": 1
+  }
+ },
+ "counts_scope": "whole_table: the aggregates above count every stored row and ignore both the filters and the page in this response",
+ "decision_states": [
+  "approved",
+  "rejected"
+ ],
+ "filters": {
+  "plan_id": null,
+  "state": null
+ },
+ "limit": 500,
+ "offset": 0,
+ "rows_backend": "memory",
+ "total_matching": 12,
+ "total_rows": 12
+}

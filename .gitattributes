@@ -1,0 +1,8 @@
+assets/*.js -text
+assets/*.css -text
+*.html -text
+*.json -text
+*.svg -text
+*.yml -text
+*.txt -text
+*.map -text

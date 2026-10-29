@@ -1,0 +1,98 @@
+{
+ "count": 3,
+ "counts_by": {
+  "kind": {
+   "host": 1,
+   "network": 2
+  },
+  "status": {
+   "blocked": 0,
+   "draft": 0,
+   "unvalidated": 3,
+   "validated": 0
+  }
+ },
+ "counts_scope": "whole_table: the aggregates above were derived from all 3 row(s) this request read, ignoring the filters and the page",
+ "documents_backend": "mongo",
+ "export_gate": "export is refused unless the last replay gave the rule at least its own min_precision on the corpus named in its validation record; the counts are published whether or not they pass",
+ "filters": {
+  "kind": null,
+  "status": null
+ },
+ "limit": 200,
+ "matched": 3,
+ "model_scope": "LightGBM classifies stored network-flow records only; host events are labelled by the Sentinel rule engine.",
+ "offset": 0,
+ "provenance": "every clause comes from a stored row of the incident it was generated from - the port and protocol its alerts carried, the feature value its flows measured, the field its endpoint events held; no model and no LLM writes a rule, and a value that was not observed is stated as absent rather than invented",
+ "rows_backend": "memory",
+ "rules": [
+  {
+   "created_at": "2026-10-29T08:44:52.222688Z",
+   "kind": "network",
+   "min_precision": 0.8,
+   "origin_incident_id": "inc-5496dc7d75dfb6f7",
+   "rule_id": "69875bed-6275-5dad-a2e6-ff7c1dd0f140",
+   "status": "unvalidated",
+   "target_label": "DDoS",
+   "title": "DDoS activity on ip:172.16.0.1#003",
+   "validation": {
+    "checked_at": "2026-10-29T08:44:52.401839Z",
+    "dataset": "C:\\\\workspace\\\\cyberagent\\data\\processed\\flows_features.parquet, 389616 rows, sha256:b9c589b17b68d76747e6d1ddad63a6833f3fcd0afc669c0de7aab5de2d1de6ff",
+    "evaluated": 389616,
+    "false_negative": 1999,
+    "false_positive": 59546,
+    "precision": 0.4463257924442337,
+    "recall": 0.96002,
+    "true_negative": 280070,
+    "true_positive": 48001
+   },
+   "yaml_text": "title: DDoS activity on ip:172.16.0.1#003\nid: 69875bed-6275-5dad-a2e6-ff7c1dd0f140\nstatus: experimental\ndescription: 'Generated from incident inc-5496dc7d75dfb6f7 (35 member alert(s), target ''DDoS'').\n\n  Indicators: Destination Port=80 (35/35 members), Protocol=6 (35/35 member flow rows), source_addresses_observed=1\n\n  Feature bounds: Flow Packets/s lte 295.4297025 (from the highest value observed of 35 member flow(s),\n  SHAP -0.647); Flow Duration gte 32414 (from the lowest value observed of 35 member flow(s), SHAP +0.375);\n  Fwd Packet Length Max gte 6 (from the lowest value observed of 35 member flow(s), SHAP +0.259)\n\n  kind chosen from the authoritative member alert alert-flow-358375-DDoS (source ''flow_ml'', label ''DDoS'')\n\n  the incident is built from simulated data, so this rule is derived from simulated data\n\n  Destination Port is already pinned to one exact value by the indicator conditions, so a bound on it\n  would restate the rule rather than narrow it\n\n  ACK Flag Count drives the prediction but is not a column a network rule may select on, so no clause\n  was generated for it\n\n  Protocol is already pinned to one exact value by the indicator conditions, so a bound on it would restate\n  the rule rather than narrow it\n\n  the top 3 feature(s) by |SHAP| are used; the rest of the explanation is not in the rule\n\n  tags come from data/knowledge/flow_label_mapping.json for class ''DDoS'''\nreferences:\n- https://attack.mitre.org/techniques/T1498/\nlogsource:\n  product: cyberagent\n  service: flow_features\n  category: network_connection\ndetection:\n  selection:\n    Destination Port: 80\n    Protocol: 6\n    Flow Packets/s|lte: 295.4297025\n    Flow Duration|gte: 32414\n    Fwd Packet Length Max|gte: 6\n  condition: selection\nfalsepositives:\n- legitimate traffic that shares the same indicator; the measured rates in the validation record say how\n  often that happened on the replay corpus\nlevel: high\ntags:\n- attack.impact\n- attack.t1498\n"
+  },
+  {
+   "created_at": "2026-10-29T08:44:52.003750Z",
+   "kind": "host",
+   "min_precision": 0.8,
+   "origin_incident_id": "inc-0cbf14a262cc0406",
+   "rule_id": "b7f1fa91-42cb-5609-9153-31a8544433e9",
+   "status": "unvalidated",
+   "target_label": "sentinel_credential_dumping",
+   "title": "sentinel_credential_dumping activity on host:SIM-BOX#001",
+   "validation": {
+    "checked_at": "2026-10-29T08:44:52.435915Z",
+    "dataset": "the manager's stored events, 391 of 391 event(s) scored, truth from 49 packed rule(s), sha256:72330b14b4a3029d120b6ce4a4e0d314eb523cc7842f2078ad44ace9684d5ec9",
+    "evaluated": 391,
+    "false_negative": 1,
+    "false_positive": 20,
+    "precision": 0.0,
+    "recall": 0.0,
+    "true_negative": 370,
+    "true_positive": 0
+   },
+   "yaml_text": "title: sentinel_credential_dumping activity on host:SIM-BOX#001\nid: b7f1fa91-42cb-5609-9153-31a8544433e9\nstatus: experimental\ndescription: 'Generated from incident inc-0cbf14a262cc0406 (27 member alert(s), target ''sentinel_credential_dumping'').\n\n  Indicators: event_type=winlog_4625_failed_logon, host=SIM-DC01\n\n  Field conditions: event_type = winlog_4625_failed_logon (carried by 25 of 27 member alert(s)); host\n  = SIM-DC01 (carried by 26 of 27 member alert(s))\n\n  kind chosen from the authoritative member alert alert-4d81a11657288337 (source ''sentinel_rule'', label\n  ''sentinel_credential_dumping'')\n\n  the incident is built from simulated data, so this rule is derived from simulated data\n\n  process is carried by 1/27 member event(s) and they do not agree, so the rule does not select on it\n\n  command_line is carried by 1/27 member event(s) and they do not agree, so the rule does not select on\n  it\n\n  parent_process is carried by 1/27 member event(s) and they do not agree, so the rule does not select\n  on it\n\n  user is carried by 8/27 member event(s) and they do not agree, so the rule does not select on it\n\n  tags come from the technique citations on the member alerts, which the manager checked against the knowledge\n  pack when its rule pack loaded'\nreferences:\n- https://attack.mitre.org/techniques/T1078/\n- https://attack.mitre.org/techniques/T1003/001/\n- https://attack.mitre.org/techniques/T1110/\n- https://attack.mitre.org/techniques/T1110/003/\n- https://attack.mitre.org/techniques/T1110/004/\nlogsource:\n  product: cyberagent\n  service: sentinel_events\n  category: host_event\ndetection:\n  selection:\n    event_type: winlog_4625_failed_logon\n    host: SIM-DC01\n  condition: selection\nfalsepositives:\n- legitimate traffic that shares the same indicator; the measured rates in the validation record say how\n  often that happened on the replay corpus\nlevel: critical\ntags:\n- attack.credential-access\n- attack.defense-evasion\n- attack.initial-access\n- attack.persistence\n- attack.privilege-escalation\n- attack.t1078\n- attack.t1003.001\n- attack.t1110\n- attack.t1110.003\n- attack.t1110.004\n"
+  },
+  {
+   "created_at": "2026-10-29T08:44:51.956382Z",
+   "kind": "network",
+   "min_precision": 0.8,
+   "origin_incident_id": "inc-14bc0029176f343f",
+   "rule_id": "ca759a89-31cc-5e66-b8be-a018aace2ce2",
+   "status": "unvalidated",
+   "target_label": "DoS GoldenEye",
+   "title": "DoS GoldenEye activity on ip:172.16.0.1#002",
+   "validation": {
+    "checked_at": "2026-10-29T08:44:52.608994Z",
+    "dataset": "C:\\\\workspace\\\\cyberagent\\data\\processed\\flows_features.parquet, 389616 rows, sha256:b9c589b17b68d76747e6d1ddad63a6833f3fcd0afc669c0de7aab5de2d1de6ff",
+    "evaluated": 389616,
+    "false_negative": 0,
+    "false_positive": 130655,
+    "precision": 0.07302693191815421,
+    "recall": 1.0,
+    "true_negative": 248668,
+    "true_positive": 10293
+   },
+   "yaml_text": "title: DoS GoldenEye activity on ip:172.16.0.1#002\nid: ca759a89-31cc-5e66-b8be-a018aace2ce2\nstatus: experimental\ndescription: 'Generated from incident inc-14bc0029176f343f (39 member alert(s), target ''DoS GoldenEye'').\n\n  Indicators: Destination Port=80 (39/39 members), Protocol=6 (39/39 member flow rows), source_addresses_observed=1\n\n  Feature bounds: Flow Packets/s lte 2000000 (from the highest value observed of 39 member flow(s), SHAP\n  -0.678); Total Fwd Packets gte 2 (from the lowest value observed of 39 member flow(s), SHAP +0.552);\n  Total Length of Fwd Packets gte 0 (from the lowest value observed of 39 member flow(s), SHAP +0.370)\n\n  kind chosen from the authoritative member alert alert-flow-80131-DoS_GoldenEye (source ''flow_ml'',\n  label ''DoS GoldenEye'')\n\n  the incident is built from simulated data, so this rule is derived from simulated data\n\n  Destination Port is already pinned to one exact value by the indicator conditions, so a bound on it\n  would restate the rule rather than narrow it\n\n  ACK Flag Count drives the prediction but is not a column a network rule may select on, so no clause\n  was generated for it\n\n  the top 3 feature(s) by |SHAP| are used; the rest of the explanation is not in the rule\n\n  tags come from data/knowledge/flow_label_mapping.json for class ''DoS GoldenEye'''\nreferences:\n- https://attack.mitre.org/techniques/T1498/\nlogsource:\n  product: cyberagent\n  service: flow_features\n  category: network_connection\ndetection:\n  selection:\n    Destination Port: 80\n    Protocol: 6\n    Flow Packets/s|lte: 2000000\n    Total Fwd Packets|gte: 2\n    Total Length of Fwd Packets|gte: 0\n  condition: selection\nfalsepositives:\n- legitimate traffic that shares the same indicator; the measured rates in the validation record say how\n  often that happened on the replay corpus\nlevel: high\ntags:\n- attack.impact\n- attack.t1498\n"
+  }
+ ],
+ "total_rows": 3,
+ "validation_from": "the replay recorded on the row when it was generated or last re-measured; POST /rules/sigma/{rule_id}/validate replays the stored text again and overwrites it"
+}

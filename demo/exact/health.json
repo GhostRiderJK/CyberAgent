@@ -1,0 +1,27 @@
+{
+ "body": {
+  "backend": "auto",
+  "documents": "mongo",
+  "fallbacks": [
+   "postgresql -> in-memory repositories: postgresql unreachable at postgresql://postgres@localhost:5432/cyberagent: connection failed: connection to server at \"127.0.0.1\", port 5432 failed: fe_sendauth: no password supplied"
+  ],
+  "rows": "memory",
+  "services": [
+   {
+    "detail": "postgresql unreachable at postgresql://postgres@localhost:5432/cyberagent: connection failed: connection to server at \"127.0.0.1\", port 5432 failed: fe_sendauth: no password supplied",
+    "latency_ms": 45.576,
+    "name": "postgresql",
+    "state": "unreachable"
+   },
+   {
+    "detail": "MongoDB 8.3.4, database cyberagent_showcase",
+    "latency_ms": 13.038,
+    "name": "mongodb",
+    "state": "ok"
+   }
+  ],
+  "status": "degraded",
+  "timestamp": "2026-10-29T08:51:52.905975Z"
+ },
+ "status": 200
+}

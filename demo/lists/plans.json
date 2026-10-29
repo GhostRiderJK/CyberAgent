@@ -1,0 +1,124 @@
+{
+ "capability": "Dry run only. This platform holds no firewall, router, reverse-proxy, directory, endpoint-management or ticketing client, no credential for one, and the Sentinel agent has no command channel, so there is no code path from an approved action to a change. An approval is a work order for a person.",
+ "count": 4,
+ "counts_by": {
+  "archetype": {
+   "arch_command_and_control": 1,
+   "arch_credential_access": 1,
+   "arch_denial_of_service": 2
+  },
+  "mode": {
+   "DRY_RUN": 4
+  }
+ },
+ "counts_scope": "whole_table: the aggregates above count every stored row and ignore both the filters and the page in this response",
+ "filters": {
+  "archetype": null,
+  "incident_id": null,
+  "mode": null
+ },
+ "limit": 200,
+ "limitation": "a plan row carries no simulated flag; whether its targets name scripted traffic is read from the incident it names, and GET /response/plans/{plan_id} reports that",
+ "offset": 0,
+ "plans": [
+  {
+   "actions": [
+    {
+     "action": "block_ip",
+     "rationale": "this destination is where the sessions went, it repeats across the incident's member flows, and stopping it severs the channel while the host stays reachable for the investigation. Target 10.0.0.41 was read from the incident's own alerts (alert-177453acf3cf7f5a, alert-181e77b955c9d191, alert-405697baf72f4470, alert-953c35ba84a10d7d, alert-d95c794860458dde and 6 more).",
+     "target": "10.0.0.41"
+    },
+    {
+     "action": "block_ip",
+     "rationale": "this destination is where the sessions went, it repeats across the incident's member flows, and stopping it severs the channel while the host stays reachable for the investigation. Target 203.0.113.19 was read from the incident's own alerts (alert-342990763c626a40, alert-38632a7a638ce11c, alert-3d81bb23d911854d, alert-51d18d3a61a13f1f, alert-72b76142ff166248 and 2 more).",
+     "target": "203.0.113.19"
+    },
+    {
+     "action": "open_ticket",
+     "rationale": "a live channel means something on the host is holding it open, and what that something is stays a question for the host itself. Target SIM-BOX was read from the incident's own alerts (alert-177453acf3cf7f5a, alert-181e77b955c9d191, alert-342990763c626a40, alert-38001d32a94c64a2, alert-38632a7a638ce11c and 15 more).",
+     "target": "SIM-BOX"
+    }
+   ],
+   "archetype": "arch_command_and_control",
+   "created_at": "2026-10-29T08:44:51.707815Z",
+   "incident_id": "inc-7ef5dc6d172eefbc",
+   "mode": "DRY_RUN",
+   "plan_id": "plan-b8c773731560dba6"
+  },
+  {
+   "actions": [
+    {
+     "action": "rate_limit",
+     "rationale": "this source is what the stored rows measured as the flood's origin, and throttling it is undone with one command if the address turns out to be spoofed or a load balancer. Target 172.16.0.1 was read from the incident's own alerts (alert-flow-109842-DDoS, alert-flow-119484-DDoS, alert-flow-129303-DDoS, alert-flow-138873-DDoS, alert-flow-138966-DDoS and 30 more).",
+     "target": "172.16.0.1"
+    }
+   ],
+   "archetype": "arch_denial_of_service",
+   "created_at": "2026-10-29T08:44:51.690793Z",
+   "incident_id": "inc-5496dc7d75dfb6f7",
+   "mode": "DRY_RUN",
+   "plan_id": "plan-19f50388649e25fd"
+  },
+  {
+   "actions": [
+    {
+     "action": "disable_account",
+     "rationale": "the incident's own member alerts name this account in failed or unusual logons, so the account is what the guesser is aiming at; the directory has to be asked by someone with credentials, and this platform has none. Target administrator was read from the incident's own alerts (alert-14de9e9159c2ee47, alert-4c736e449337fe48, alert-51416873e59027fb, alert-afb4e3e1c5439447, alert-b205de002b9021b9 and 3 more).",
+     "target": "administrator"
+    },
+    {
+     "action": "disable_account",
+     "rationale": "the incident's own member alerts name this account in failed or unusual logons, so the account is what the guesser is aiming at; the directory has to be asked by someone with credentials, and this platform has none. Target intern-09 was read from the incident's own alerts (alert-4fd71a29d670eed8, alert-a462c24b2074ba6a, alert-a527410064265a23).",
+     "target": "intern-09"
+    },
+    {
+     "action": "disable_account",
+     "rationale": "the incident's own member alerts name this account in failed or unusual logons, so the account is what the guesser is aiming at; the directory has to be asked by someone with credentials, and this platform has none. Target jai was read from the incident's own alerts (alert-4d81a11657288337, alert-4e7a0e9ac47a19a1, alert-ae0a270f1b38d851).",
+     "target": "jai"
+    },
+    {
+     "action": "block_ip",
+     "rationale": "this source address carried the attempts, and a burst from one address against several accounts is the shape the flow model and the authentication rules both reported. Target 203.0.113.60 was read from the incident's own alerts (alert-08a32a182221caf6, alert-14de9e9159c2ee47, alert-23de461c0135b4aa, alert-497b806bef85f88a, alert-4e7a0e9ac47a19a1 and 15 more).",
+     "target": "203.0.113.60"
+    },
+    {
+     "action": "block_ip",
+     "rationale": "this source address carried the attempts, and a burst from one address against several accounts is the shape the flow model and the authentication rules both reported. Target 198.51.100.3 was read from the incident's own alerts (alert-afb4e3e1c5439447, alert-e81e902d49622acc).",
+     "target": "198.51.100.3"
+    },
+    {
+     "action": "block_ip",
+     "rationale": "this source address carried the attempts, and a burst from one address against several accounts is the shape the flow model and the authentication rules both reported. Target 198.51.100.0 was read from the incident's own alerts (alert-b205de002b9021b9).",
+     "target": "198.51.100.0"
+    },
+    {
+     "action": "open_ticket",
+     "rationale": "a credential-access incident usually means one account was guessed before the guessing stopped, so somebody has to look at what that account did - which is a person's judgement, not a rule. Target SIM-DC01 was read from the incident's own alerts (alert-08a32a182221caf6, alert-14de9e9159c2ee47, alert-23de461c0135b4aa, alert-497b806bef85f88a, alert-4c736e449337fe48 and 21 more).",
+     "target": "SIM-DC01"
+    }
+   ],
+   "archetype": "arch_credential_access",
+   "created_at": "2026-10-29T08:44:51.673178Z",
+   "incident_id": "inc-0cbf14a262cc0406",
+   "mode": "DRY_RUN",
+   "plan_id": "plan-c0a97cf7a3ec56e8"
+  },
+  {
+   "actions": [
+    {
+     "action": "rate_limit",
+     "rationale": "this source is what the stored rows measured as the flood's origin, and throttling it is undone with one command if the address turns out to be spoofed or a load balancer. Target 172.16.0.1 was read from the incident's own alerts (alert-flow-10211-DoS_Hulk, alert-flow-104248-DoS_Hulk, alert-flow-105461-DoS_Hulk, alert-flow-110615-DoS_Hulk, alert-flow-112886-DoS_Hulk and 34 more).",
+     "target": "172.16.0.1"
+    }
+   ],
+   "archetype": "arch_denial_of_service",
+   "created_at": "2026-10-29T08:44:51.654927Z",
+   "incident_id": "inc-14bc0029176f343f",
+   "mode": "DRY_RUN",
+   "plan_id": "plan-ba25dc748c4b5c84"
+  }
+ ],
+ "rows_backend": "memory",
+ "total_matching": 4,
+ "total_rows": 4
+}

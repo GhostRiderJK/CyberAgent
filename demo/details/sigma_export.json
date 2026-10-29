@@ -1,0 +1,104 @@
+{
+ "69875bed-6275-5dad-a2e6-ff7c1dd0f140": {
+  "body": {
+   "detail": {
+    "error": "sigma_export_blocked",
+    "gate": "export is refused unless the last replay gave the rule at least its own min_precision on the corpus named in its validation record; the counts are published whether or not they pass",
+    "next": "POST /rules/sigma/69875bed-6275-5dad-a2e6-ff7c1dd0f140/validate to replay it again",
+    "reason": "the row's status is 'unvalidated', and only a rule whose replay reached its own min_precision (0.8) is exported",
+    "rule": {
+     "measurement": {
+      "checked_at": "2026-10-29T08:44:52.401839Z",
+      "dataset": "C:\\\\workspace\\\\cyberagent\\data\\processed\\flows_features.parquet, 389616 rows, sha256:b9c589b17b68d76747e6d1ddad63a6833f3fcd0afc669c0de7aab5de2d1de6ff",
+      "evaluated": 389616,
+      "false_negative": 1999,
+      "false_positive": 59546,
+      "precision": 0.4463257924442337,
+      "recall": 0.96002,
+      "true_negative": 280070,
+      "true_positive": 48001
+     },
+     "min_precision": 0.8,
+     "rule_id": "69875bed-6275-5dad-a2e6-ff7c1dd0f140",
+     "selection": [
+      "Destination Port = 80",
+      "Protocol = 6",
+      "Flow Packets/s lte 295.43",
+      "Flow Duration gte 32414",
+      "Fwd Packet Length Max gte 6"
+     ],
+     "status": "unvalidated"
+    },
+    "rule_id": "69875bed-6275-5dad-a2e6-ff7c1dd0f140"
+   }
+  },
+  "status": 409
+ },
+ "b7f1fa91-42cb-5609-9153-31a8544433e9": {
+  "body": {
+   "detail": {
+    "error": "sigma_export_blocked",
+    "gate": "export is refused unless the last replay gave the rule at least its own min_precision on the corpus named in its validation record; the counts are published whether or not they pass",
+    "next": "POST /rules/sigma/b7f1fa91-42cb-5609-9153-31a8544433e9/validate to replay it again",
+    "reason": "the row's status is 'unvalidated', and only a rule whose replay reached its own min_precision (0.8) is exported",
+    "rule": {
+     "measurement": {
+      "checked_at": "2026-10-29T08:44:52.435915Z",
+      "dataset": "the manager's stored events, 391 of 391 event(s) scored, truth from 49 packed rule(s), sha256:72330b14b4a3029d120b6ce4a4e0d314eb523cc7842f2078ad44ace9684d5ec9",
+      "evaluated": 391,
+      "false_negative": 1,
+      "false_positive": 20,
+      "precision": 0.0,
+      "recall": 0.0,
+      "true_negative": 370,
+      "true_positive": 0
+     },
+     "min_precision": 0.8,
+     "rule_id": "b7f1fa91-42cb-5609-9153-31a8544433e9",
+     "selection": [
+      "event_type = winlog_4625_failed_logon",
+      "host = SIM-DC01"
+     ],
+     "status": "unvalidated"
+    },
+    "rule_id": "b7f1fa91-42cb-5609-9153-31a8544433e9"
+   }
+  },
+  "status": 409
+ },
+ "ca759a89-31cc-5e66-b8be-a018aace2ce2": {
+  "body": {
+   "detail": {
+    "error": "sigma_export_blocked",
+    "gate": "export is refused unless the last replay gave the rule at least its own min_precision on the corpus named in its validation record; the counts are published whether or not they pass",
+    "next": "POST /rules/sigma/ca759a89-31cc-5e66-b8be-a018aace2ce2/validate to replay it again",
+    "reason": "the row's status is 'unvalidated', and only a rule whose replay reached its own min_precision (0.8) is exported",
+    "rule": {
+     "measurement": {
+      "checked_at": "2026-10-29T08:44:52.608994Z",
+      "dataset": "C:\\\\workspace\\\\cyberagent\\data\\processed\\flows_features.parquet, 389616 rows, sha256:b9c589b17b68d76747e6d1ddad63a6833f3fcd0afc669c0de7aab5de2d1de6ff",
+      "evaluated": 389616,
+      "false_negative": 0,
+      "false_positive": 130655,
+      "precision": 0.07302693191815421,
+      "recall": 1.0,
+      "true_negative": 248668,
+      "true_positive": 10293
+     },
+     "min_precision": 0.8,
+     "rule_id": "ca759a89-31cc-5e66-b8be-a018aace2ce2",
+     "selection": [
+      "Destination Port = 80",
+      "Protocol = 6",
+      "Flow Packets/s lte 2000000",
+      "Total Fwd Packets gte 2",
+      "Total Length of Fwd Packets gte 0"
+     ],
+     "status": "unvalidated"
+    },
+    "rule_id": "ca759a89-31cc-5e66-b8be-a018aace2ce2"
+   }
+  },
+  "status": 409
+ }
+}

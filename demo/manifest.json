@@ -1,0 +1,477 @@
+{
+ "details": [
+  {
+   "file": "details/alerts.json",
+   "prefix": "/alerts/"
+  },
+  {
+   "file": "details/incidents.json",
+   "prefix": "/incidents/"
+  },
+  {
+   "file": "details/sigma.json",
+   "prefix": "/rules/sigma/"
+  },
+  {
+   "file": "details/sigma_export.json",
+   "prefix": "/rules/sigma/",
+   "suffix": "/export"
+  },
+  {
+   "file": "details/plans.json",
+   "prefix": "/response/plans/"
+  }
+ ],
+ "exact": {
+  "GET /agents": "exact/agents.json",
+  "GET /alerts": "exact/alerts.json",
+  "GET /feedback": "exact/feedback.json",
+  "GET /feedback/rule-tuning": "exact/feedback-rule-tuning.json",
+  "GET /feedback/rule-tuning?rule_id=sentinel_log_text_auth_failure_burst": "exact/feedback-rule-tuning-rule_id-sentinel_log_text_a-14d854d8.json",
+  "GET /feedback/rule-tuning?rule_id=sentinel_simulated_data_present": "exact/feedback-rule-tuning-rule_id-sentinel_simulated_data_present.json",
+  "GET /health": "exact/health.json",
+  "GET /incidents": "exact/incidents.json",
+  "GET /models": "exact/models.json",
+  "GET /queue/stats": "exact/queue-stats.json",
+  "GET /response/approvals": "exact/response-approvals.json",
+  "GET /response/plans": "exact/response-plans.json",
+  "GET /rules": "exact/rules.json",
+  "GET /rules/sigma": "exact/rules-sigma.json"
+ },
+ "lists": [
+  {
+   "defaults": {
+    "limit": 50,
+    "offset": 0
+   },
+   "file": "lists/alerts.json",
+   "filters": {
+    "agent_id": "agent_id",
+    "incident_id": "incident_id",
+    "label_source": "label_source",
+    "severity": "severity",
+    "source": "source"
+   },
+   "id_field": "alert_id",
+   "limit_param": "limit",
+   "list_field": "alerts",
+   "offset_param": "offset",
+   "path": "/alerts"
+  },
+  {
+   "defaults": {
+    "limit": 50,
+    "offset": 0
+   },
+   "file": "lists/incidents.json",
+   "filters": {
+    "archetype": "archetype",
+    "severity": "severity",
+    "status": "status"
+   },
+   "id_field": "incident_id",
+   "limit_param": "limit",
+   "list_field": "incidents",
+   "offset_param": "offset",
+   "path": "/incidents"
+  },
+  {
+   "defaults": {},
+   "file": "lists/agents.json",
+   "filters": {
+    "status": "status"
+   },
+   "id_field": "agent_id",
+   "limit_param": null,
+   "list_field": "agents",
+   "offset_param": null,
+   "path": "/agents"
+  },
+  {
+   "defaults": {
+    "limit": 50,
+    "offset": 0
+   },
+   "file": "lists/sigma.json",
+   "filters": {
+    "kind": "kind",
+    "status": "status"
+   },
+   "id_field": "rule_id",
+   "limit_param": "limit",
+   "list_field": "rules",
+   "offset_param": "offset",
+   "path": "/rules/sigma"
+  },
+  {
+   "defaults": {
+    "limit": 50,
+    "offset": 0
+   },
+   "file": "lists/plans.json",
+   "filters": {
+    "archetype": "archetype",
+    "incident_id": "incident_id",
+    "mode": "mode"
+   },
+   "id_field": "plan_id",
+   "limit_param": "limit",
+   "list_field": "plans",
+   "offset_param": "offset",
+   "path": "/response/plans"
+  },
+  {
+   "defaults": {
+    "limit": 50,
+    "offset": 0
+   },
+   "file": "lists/approvals.json",
+   "filters": {
+    "plan_id": "plan_id",
+    "state": "state"
+   },
+   "id_field": "approval_id",
+   "limit_param": "limit",
+   "list_field": "approvals",
+   "offset_param": "offset",
+   "path": "/response/approvals"
+  },
+  {
+   "defaults": {
+    "limit": 50
+   },
+   "file": "lists/feedback.json",
+   "filters": {
+    "decision": "decision",
+    "target_type": "target_type"
+   },
+   "id_field": "verdict_id",
+   "limit_param": "limit",
+   "list_field": "verdicts",
+   "offset_param": null,
+   "path": "/feedback"
+  }
+ ],
+ "provenance": {
+  "captured_at": "2026-10-29T08:51:57+00:00",
+  "counts": {
+   "alerts": 480,
+   "detail_routes": 5,
+   "exact_reads": 14,
+   "files": 27,
+   "list_routes": 7
+  },
+  "fold_verification": [
+   {
+    "checks": 435,
+    "disagreements": {},
+    "dropped": [],
+    "failures": {},
+    "path": "/alerts",
+    "proven": {
+     "agent_id": "agent_id",
+     "incident_id": "incident_id",
+     "label_source": "label_source",
+     "severity": "severity",
+     "source": "source"
+    },
+    "rows": 480
+   },
+   {
+    "checks": 250,
+    "disagreements": {},
+    "dropped": [],
+    "failures": {},
+    "path": "/incidents",
+    "proven": {
+     "archetype": "archetype",
+     "severity": "severity",
+     "status": "status"
+    },
+    "rows": 143
+   },
+   {
+    "checks": 2,
+    "disagreements": {},
+    "dropped": [],
+    "failures": {},
+    "path": "/agents",
+    "proven": {
+     "status": "status"
+    },
+    "rows": 1
+   },
+   {
+    "checks": 30,
+    "disagreements": {},
+    "dropped": [],
+    "failures": {},
+    "path": "/rules/sigma",
+    "proven": {
+     "kind": "kind",
+     "status": "status"
+    },
+    "rows": 3
+   },
+   {
+    "checks": 140,
+    "disagreements": {},
+    "dropped": [],
+    "failures": {},
+    "path": "/response/plans",
+    "proven": {
+     "archetype": "archetype",
+     "incident_id": "incident_id",
+     "mode": "mode"
+    },
+    "rows": 4
+   },
+   {
+    "checks": 100,
+    "disagreements": {},
+    "dropped": [],
+    "failures": {},
+    "path": "/response/approvals",
+    "proven": {
+     "plan_id": "plan_id",
+     "state": "state"
+    },
+    "rows": 12
+   },
+   {
+    "checks": 80,
+    "disagreements": {},
+    "dropped": [],
+    "failures": {},
+    "path": "/feedback",
+    "proven": {
+     "decision": "decision",
+     "target_type": "target_type"
+    },
+    "rows": 23
+   }
+  ],
+  "privacy_scan": {
+   "files_scanned": 27,
+   "findings": []
+  },
+  "proven": true,
+  "recorded_run": "one localhost run of scripts/run_demo.py, recorded by scripts/capture_fixtures.py on 2026-10-29; the API process stayed up while this tape was written",
+  "schema": "cyberagent.demo-recording/1",
+  "scrub": {
+   "accounts": 4,
+   "addresses": 7,
+   "dataset_address_collisions": 0,
+   "hostnames": 2,
+   "paths": 2,
+   "uris": 0
+  },
+  "scrub_note": "hostnames, addresses, accounts, home paths and store URIs replaced with synthetic values",
+  "source": "http://127.0.0.1:8011",
+  "unproven_filters": [],
+  "writes": [
+   {
+    "detail": "inc-49d3d36ce8c8206b",
+    "result": "HTTP 200",
+    "step": "investigate"
+   },
+   {
+    "detail": "inc-fa0903cb8d7a8c1b",
+    "result": "HTTP 200",
+    "step": "investigate"
+   },
+   {
+    "detail": "inc-8acfe27947737267",
+    "result": "HTTP 200",
+    "step": "investigate"
+   },
+   {
+    "detail": "inc-14bc0029176f343f -> plan-ba25dc748c4b5c84",
+    "result": "HTTP 200",
+    "step": "plan"
+   },
+   {
+    "detail": "inc-0cbf14a262cc0406 -> plan-c0a97cf7a3ec56e8",
+    "result": "HTTP 200",
+    "step": "plan"
+   },
+   {
+    "detail": "inc-5496dc7d75dfb6f7 -> plan-19f50388649e25fd",
+    "result": "HTTP 200",
+    "step": "plan"
+   },
+   {
+    "detail": "inc-7ef5dc6d172eefbc -> plan-b8c773731560dba6",
+    "result": "HTTP 200",
+    "step": "plan"
+   },
+   {
+    "detail": "apr-947095aa3315d2bf",
+    "result": "HTTP 200",
+    "step": "decision approved"
+   },
+   {
+    "detail": "apr-c2e6ef14ea05b68d",
+    "result": "HTTP 200",
+    "step": "decision rejected"
+   },
+   {
+    "detail": "inc-14bc0029176f343f -> ca759a89-31cc-5e66-b8be-a018aace2ce2",
+    "result": "HTTP 200",
+    "step": "generate rule"
+   },
+   {
+    "detail": "inc-0cbf14a262cc0406 -> b7f1fa91-42cb-5609-9153-31a8544433e9",
+    "result": "HTTP 200",
+    "step": "generate rule"
+   },
+   {
+    "detail": "inc-5496dc7d75dfb6f7 -> 69875bed-6275-5dad-a2e6-ff7c1dd0f140",
+    "result": "HTTP 200",
+    "step": "generate rule"
+   },
+   {
+    "detail": "69875bed-6275-5dad-a2e6-ff7c1dd0f140 -> unvalidated",
+    "result": "HTTP 200",
+    "step": "validate rule"
+   },
+   {
+    "detail": "b7f1fa91-42cb-5609-9153-31a8544433e9 -> unvalidated",
+    "result": "HTTP 200",
+    "step": "validate rule"
+   },
+   {
+    "detail": "ca759a89-31cc-5e66-b8be-a018aace2ce2 -> unvalidated",
+    "result": "HTTP 200",
+    "step": "validate rule"
+   },
+   {
+    "detail": "alert-flow-388323-DoS_Hulk [DoS Hulk]",
+    "result": "HTTP 200",
+    "step": "verdict fp"
+   },
+   {
+    "detail": "alert-flow-383730-DDoS [DDoS]",
+    "result": "HTTP 200",
+    "step": "verdict fp"
+   },
+   {
+    "detail": "alert-flow-382589-PortScan [PortScan]",
+    "result": "HTTP 200",
+    "step": "verdict fp"
+   },
+   {
+    "detail": "alert-flow-382272-SSH-Patator [SSH-Patator]",
+    "result": "HTTP 200",
+    "step": "verdict fp"
+   },
+   {
+    "detail": "alert-flow-378584-DDoS [DDoS]",
+    "result": "HTTP 200",
+    "step": "verdict fp"
+   },
+   {
+    "detail": "alert-flow-376393-PortScan [PortScan]",
+    "result": "HTTP 200",
+    "step": "verdict fp"
+   },
+   {
+    "detail": "alert-flow-375400-DDoS [DDoS]",
+    "result": "HTTP 200",
+    "step": "verdict fp"
+   },
+   {
+    "detail": "alert-flow-371112-DoS_Hulk [DoS Hulk]",
+    "result": "HTTP 200",
+    "step": "verdict fp"
+   },
+   {
+    "detail": "alert-flow-367955-PortScan [PortScan]",
+    "result": "HTTP 200",
+    "step": "verdict fp"
+   },
+   {
+    "detail": "alert-flow-361689-PortScan [PortScan]",
+    "result": "HTTP 200",
+    "step": "verdict fp"
+   },
+   {
+    "detail": "alert-flow-358375-DDoS [DDoS]",
+    "result": "HTTP 200",
+    "step": "verdict fp"
+   },
+   {
+    "detail": "alert-flow-357412-PortScan [PortScan]",
+    "result": "HTTP 200",
+    "step": "verdict fp"
+   },
+   {
+    "detail": "alert-flow-356768-FTP-Patator [FTP-Patator]",
+    "result": "HTTP 200",
+    "step": "verdict fp"
+   },
+   {
+    "detail": "alert-flow-353036-DoS_GoldenEye [DoS GoldenEye]",
+    "result": "HTTP 200",
+    "step": "verdict fp"
+   },
+   {
+    "detail": "alert-flow-350737-PortScan [PortScan]",
+    "result": "HTTP 200",
+    "step": "verdict fp"
+   },
+   {
+    "detail": "alert-flow-342598-DDoS [DDoS]",
+    "result": "HTTP 200",
+    "step": "verdict fp"
+   },
+   {
+    "detail": "alert-flow-388323-DoS_Hulk",
+    "result": "HTTP 200",
+    "step": "verdict conflict"
+   },
+   {
+    "detail": "388786",
+    "result": "HTTP 200",
+    "step": "verdict needs_review on flow"
+   },
+   {
+    "detail": "388323",
+    "result": "HTTP 200",
+    "step": "verdict confirmed on flow"
+   },
+   {
+    "detail": "alert-6dd2466c7148e7c2 rule=sentinel_simulated_data_present",
+    "result": "HTTP 200",
+    "step": "verdict rule fp"
+   },
+   {
+    "detail": "alert-6debfbef51805c99 rule=sentinel_log_text_auth_failure_burst",
+    "result": "HTTP 200",
+    "step": "verdict rule fp"
+   },
+   {
+    "detail": "alert-9e8f43c2b9cb66cc rule=sentinel_simulated_data_present",
+    "result": "HTTP 200",
+    "step": "verdict rule fp"
+   },
+   {
+    "detail": "inc-14bc0029176f343f",
+    "result": "HTTP 200",
+    "step": "verdict incident"
+   },
+   {
+    "detail": "{\"dry_run\": true, \"promoted\": false, \"version\": null, \"feedback\": {\"ve",
+    "result": "HTTP 200",
+    "step": "retrain dry run"
+   },
+   {
+    "detail": "version=mv-20261029T084533Z-97a76acc346a in 24s",
+    "result": "HTTP 200",
+    "step": "retrain"
+   }
+  ],
+  "writes_note": "carried from the populate pass in the report this run replaced: this run was started with --no-populate, so it re-recorded the reads and performed no write of its own"
+ },
+ "schema": "cyberagent.demo-recording/1"
+}

@@ -1,0 +1,23 @@
+{
+ "body": {
+  "agents": [
+   {
+    "agent_id": "agent-ad43875c99a0",
+    "created_at": "2026-10-29T08:08:44.718690Z",
+    "enrolled_at": "2026-10-29T08:08:44.718699Z",
+    "hostname": "soc-demo-host",
+    "ip": "198.51.100.11",
+    "key_present": true,
+    "last_seen_at": "2026-10-29T08:08:45.165201Z",
+    "name": "demo-sentinel",
+    "os_name": "Windows",
+    "status": "active",
+    "version": "0.1.0"
+   }
+  ],
+  "count": 1,
+  "documents_backend": "mongo",
+  "rows_backend": "memory"
+ },
+ "status": 200
+}

@@ -1,0 +1,82 @@
+{
+ "body": {
+  "active": null,
+  "agreement": "nothing registered",
+  "agreement_statement": "the registry row and models/active.json are two records of one decision; agreement means the version marked active in the rows is the version the pointer tells this process to load, and its file is on disk",
+  "count": 1,
+  "counts_from": "versions and active from the model_versions rows; model_present and metrics_present from a stat of models\\registry/<version>/; pointer from models\\active.json; serving from this process's loaded model",
+  "feedback_scope": "whole_table verdict counts; a retrain reads these rows but trains only on the ones that survive its rules, which its own report breaks down",
+  "feedback_verdicts": {
+   "confirmed": 3,
+   "false_positive": 19,
+   "needs_review": 1
+  },
+  "gate_statement": "a candidate is promotable only when its confusion matrix re-derives its own accuracy and macro F1, it was measured on the untouched test split, every class the model predicts has rows there, and its macro F1 is not below the active version's by more than the tolerance",
+  "mismatch": null,
+  "model_scope": "LightGBM classifies stored network-flow records only; host events are labelled by the Sentinel rule engine.",
+  "pointer": {
+   "error": null,
+   "model_file": null,
+   "model_missing": false,
+   "path": "models\\active.json",
+   "present": false,
+   "previous_version": null,
+   "reason": null,
+   "set_at": null,
+   "set_by": null,
+   "version": null
+  },
+  "pointer_path": "models\\active.json",
+  "registry_root": "models\\registry",
+  "retrain_default": "POST /models/retrain runs a dry plan unless dry_run is set to false, and moves serving only when promote is explicitly true",
+  "serving": {
+   "command": "uv run python scripts/tasks.py reduce && uv run python scripts/tasks.py preprocess && uv run python scripts/tasks.py train",
+   "flow_count": 389616,
+   "model": "LGBMClassifier",
+   "model_file": "models\\lightgbm.joblib",
+   "model_version": null,
+   "pointer": {
+    "error": null,
+    "model_file": null,
+    "model_missing": false,
+    "path": "models\\active.json",
+    "present": false,
+    "previous_version": null,
+    "reason": null,
+    "set_at": null,
+    "set_by": null,
+    "version": null
+   },
+   "ready": true,
+   "reason": null
+  },
+  "serving_matches_active": true,
+  "serving_reload": "a pointer change reaches this process only through reload_active_model(); POST /models/promote and POST /models/rollback call it and report the outcome, and an API restart picks up the pointer on its own",
+  "versions": [
+   {
+    "active": false,
+    "algorithm": "lightgbm",
+    "data_hash": "sha256:d305e7b68ba55ca297cbbececfb3259513d3a66512b4082999487d191dd66c12",
+    "feedback_rows": 11,
+    "metrics": {
+     "accuracy": 0.998875,
+     "f1_weighted": 0.998879,
+     "macro_f1": 0.995386,
+     "precision_weighted": 0.998889,
+     "recall_weighted": 0.998875
+    },
+    "metrics_present": true,
+    "model_name": "flow_lightgbm",
+    "model_path": "models\\registry\\mv-20261029T084533Z-97a76acc346a\\lightgbm.joblib",
+    "model_present": true,
+    "promoted_at": null,
+    "promoted_by": null,
+    "rollback_of": null,
+    "trained_at": "2026-10-29T08:45:33.219415Z",
+    "training_rows": 248929,
+    "version": "mv-20261029T084533Z-97a76acc346a"
+   }
+  ]
+ },
+ "status": 200
+}

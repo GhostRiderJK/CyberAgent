@@ -1,0 +1,42 @@
+{
+ "body": {
+  "applied": false,
+  "candidates": [
+   {
+    "confirmed": 0,
+    "distinct_alerts": 2,
+    "example_alert_ids": [
+     "alert-6dd2466c7148e7c2",
+     "alert-9e8f43c2b9cb66cc"
+    ],
+    "false_positives": 2,
+    "needs_review": 0,
+    "rule_id": "sentinel_simulated_data_present"
+   },
+   {
+    "confirmed": 0,
+    "distinct_alerts": 1,
+    "example_alert_ids": [
+     "alert-6debfbef51805c99"
+    ],
+    "false_positives": 1,
+    "needs_review": 0,
+    "rule_id": "sentinel_log_text_auth_failure_burst"
+   }
+  ],
+  "limitation": "suppression candidates are read-only: no rule file is edited and no rule is disabled by this endpoint or by storing a verdict. Tuning a rule is a human edit to rules/sentinel/*.yaml followed by POST /rules/reload",
+  "scan_limit": 5000,
+  "scan_request": {
+   "limit": 5000,
+   "rule_id": null
+  },
+  "scanned_all": true,
+  "unattributed": {
+   "label_source:ml_model": 17,
+   "target_type:flow": 2,
+   "target_type:incident": 1
+  },
+  "verdicts_scanned": 23
+ },
+ "status": 200
+}

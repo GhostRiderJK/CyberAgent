@@ -1,0 +1,272 @@
+{
+ "count": 23,
+ "counts_by_decision": {
+  "confirmed": 3,
+  "false_positive": 19,
+  "needs_review": 1
+ },
+ "counts_scope": "whole_table: the counts above ignore the filters and the page in this response",
+ "documents_backend": "mongo",
+ "filters": {
+  "decision": null,
+  "target_type": null
+ },
+ "limit": 500,
+ "rows_backend": "memory",
+ "statement": "a verdict is one stored row about one target: it changes no rule, relabels no alert and trains no model; a retrain reads verdicts only when an operator asks for one, and promotion is a separate decision the gate makes on the test split",
+ "verdicts": [
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.663026Z",
+   "decision": "confirmed",
+   "note": "the grouping is right: one campaign on one endpoint",
+   "proposed_label": null,
+   "rule_tuning_candidate": false,
+   "target_id": "inc-14bc0029176f343f",
+   "target_type": "incident",
+   "verdict_id": "fb-8436407f989604a3"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.660421Z",
+   "decision": "false_positive",
+   "note": "rule noise on a workstation: rule-tuning evidence, not ML",
+   "proposed_label": null,
+   "rule_tuning_candidate": true,
+   "target_id": "alert-9e8f43c2b9cb66cc",
+   "target_type": "alert",
+   "verdict_id": "fb-a4b74035d9142735"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.658047Z",
+   "decision": "false_positive",
+   "note": "rule noise on a workstation: rule-tuning evidence, not ML",
+   "proposed_label": null,
+   "rule_tuning_candidate": true,
+   "target_id": "alert-6debfbef51805c99",
+   "target_type": "alert",
+   "verdict_id": "fb-b8bad4a5b2386a6c"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.655815Z",
+   "decision": "false_positive",
+   "note": "rule noise on a workstation: rule-tuning evidence, not ML",
+   "proposed_label": null,
+   "rule_tuning_candidate": true,
+   "target_id": "alert-6dd2466c7148e7c2",
+   "target_type": "alert",
+   "verdict_id": "fb-a5f736258f84a372"
+  },
+  {
+   "analyst_id": "analyst-02",
+   "created_at": "2026-10-29T08:44:52.653561Z",
+   "decision": "confirmed",
+   "note": "flow-level confirmed, recorded for the demo",
+   "proposed_label": null,
+   "rule_tuning_candidate": false,
+   "target_id": "388323",
+   "target_type": "flow",
+   "verdict_id": "fb-68b85e1ef8c6ec0f"
+  },
+  {
+   "analyst_id": "analyst-02",
+   "created_at": "2026-10-29T08:44:52.650824Z",
+   "decision": "needs_review",
+   "note": "flow-level needs_review, recorded for the demo",
+   "proposed_label": null,
+   "rule_tuning_candidate": false,
+   "target_id": "388786",
+   "target_type": "flow",
+   "verdict_id": "fb-9054a32e3b1b0226"
+  },
+  {
+   "analyst_id": "analyst-02",
+   "created_at": "2026-10-29T08:44:52.647914Z",
+   "decision": "confirmed",
+   "note": "second witness, opposite call: this pair is a conflict",
+   "proposed_label": null,
+   "rule_tuning_candidate": false,
+   "target_id": "alert-flow-388323-DoS_Hulk",
+   "target_type": "alert",
+   "verdict_id": "fb-a9e25e4c622a45ca"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.646103Z",
+   "decision": "false_positive",
+   "note": "recorded for the public demo: the classifier read this flow as an attack",
+   "proposed_label": "BENIGN",
+   "rule_tuning_candidate": false,
+   "target_id": "alert-flow-342598-DDoS",
+   "target_type": "alert",
+   "verdict_id": "fb-fddac55c981b4ec7"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.643970Z",
+   "decision": "false_positive",
+   "note": "recorded for the public demo: the classifier read this flow as an attack",
+   "proposed_label": "BENIGN",
+   "rule_tuning_candidate": false,
+   "target_id": "alert-flow-350737-PortScan",
+   "target_type": "alert",
+   "verdict_id": "fb-e9b159b0740cf094"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.641508Z",
+   "decision": "false_positive",
+   "note": "recorded for the public demo: the classifier read this flow as an attack",
+   "proposed_label": "BENIGN",
+   "rule_tuning_candidate": false,
+   "target_id": "alert-flow-353036-DoS_GoldenEye",
+   "target_type": "alert",
+   "verdict_id": "fb-f47bf2ae62d0b845"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.638861Z",
+   "decision": "false_positive",
+   "note": "recorded for the public demo: the classifier read this flow as an attack",
+   "proposed_label": "BENIGN",
+   "rule_tuning_candidate": false,
+   "target_id": "alert-flow-356768-FTP-Patator",
+   "target_type": "alert",
+   "verdict_id": "fb-0c13292c8e2f8a54"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.636837Z",
+   "decision": "false_positive",
+   "note": "recorded for the public demo: the classifier read this flow as an attack",
+   "proposed_label": "BENIGN",
+   "rule_tuning_candidate": false,
+   "target_id": "alert-flow-357412-PortScan",
+   "target_type": "alert",
+   "verdict_id": "fb-0b1587c813ef6ff8"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.634648Z",
+   "decision": "false_positive",
+   "note": "recorded for the public demo: the classifier read this flow as an attack",
+   "proposed_label": "BENIGN",
+   "rule_tuning_candidate": false,
+   "target_id": "alert-flow-358375-DDoS",
+   "target_type": "alert",
+   "verdict_id": "fb-5f9444025592d810"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.632849Z",
+   "decision": "false_positive",
+   "note": "recorded for the public demo: the classifier read this flow as an attack",
+   "proposed_label": "BENIGN",
+   "rule_tuning_candidate": false,
+   "target_id": "alert-flow-361689-PortScan",
+   "target_type": "alert",
+   "verdict_id": "fb-b831c492c8f76d7f"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.631016Z",
+   "decision": "false_positive",
+   "note": "recorded for the public demo: the classifier read this flow as an attack",
+   "proposed_label": "BENIGN",
+   "rule_tuning_candidate": false,
+   "target_id": "alert-flow-367955-PortScan",
+   "target_type": "alert",
+   "verdict_id": "fb-f3a718f52911f99e"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.628949Z",
+   "decision": "false_positive",
+   "note": "recorded for the public demo: the classifier read this flow as an attack",
+   "proposed_label": "BENIGN",
+   "rule_tuning_candidate": false,
+   "target_id": "alert-flow-371112-DoS_Hulk",
+   "target_type": "alert",
+   "verdict_id": "fb-83590f5897b87dc5"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.626635Z",
+   "decision": "false_positive",
+   "note": "recorded for the public demo: the classifier read this flow as an attack",
+   "proposed_label": "BENIGN",
+   "rule_tuning_candidate": false,
+   "target_id": "alert-flow-375400-DDoS",
+   "target_type": "alert",
+   "verdict_id": "fb-cb380042b38fceca"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.624669Z",
+   "decision": "false_positive",
+   "note": "recorded for the public demo: the classifier read this flow as an attack",
+   "proposed_label": "BENIGN",
+   "rule_tuning_candidate": false,
+   "target_id": "alert-flow-376393-PortScan",
+   "target_type": "alert",
+   "verdict_id": "fb-c86f8b5ba9a151e8"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.622521Z",
+   "decision": "false_positive",
+   "note": "recorded for the public demo: the classifier read this flow as an attack",
+   "proposed_label": "BENIGN",
+   "rule_tuning_candidate": false,
+   "target_id": "alert-flow-378584-DDoS",
+   "target_type": "alert",
+   "verdict_id": "fb-c061ecde68999bf5"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.620158Z",
+   "decision": "false_positive",
+   "note": "recorded for the public demo: the classifier read this flow as an attack",
+   "proposed_label": "BENIGN",
+   "rule_tuning_candidate": false,
+   "target_id": "alert-flow-382272-SSH-Patator",
+   "target_type": "alert",
+   "verdict_id": "fb-bfa049dbf82e7cbe"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.618325Z",
+   "decision": "false_positive",
+   "note": "recorded for the public demo: the classifier read this flow as an attack",
+   "proposed_label": "BENIGN",
+   "rule_tuning_candidate": false,
+   "target_id": "alert-flow-382589-PortScan",
+   "target_type": "alert",
+   "verdict_id": "fb-c53f0be6095641c0"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.616063Z",
+   "decision": "false_positive",
+   "note": "recorded for the public demo: the classifier read this flow as an attack",
+   "proposed_label": "BENIGN",
+   "rule_tuning_candidate": false,
+   "target_id": "alert-flow-383730-DDoS",
+   "target_type": "alert",
+   "verdict_id": "fb-bfbf06bcbb88f8b3"
+  },
+  {
+   "analyst_id": "analyst-01",
+   "created_at": "2026-10-29T08:44:52.613114Z",
+   "decision": "false_positive",
+   "note": "recorded for the public demo: the classifier read this flow as an attack",
+   "proposed_label": "BENIGN",
+   "rule_tuning_candidate": false,
+   "target_id": "alert-flow-388323-DoS_Hulk",
+   "target_type": "alert",
+   "verdict_id": "fb-87589016b8ac70d8"
+  }
+ ]
+}

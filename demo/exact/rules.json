@@ -1,0 +1,1670 @@
+{
+ "body": {
+  "count": 49,
+  "directory": "C:\\\\workspace\\\\cyberagent\\rules\\sentinel",
+  "rules": [
+   {
+    "description": "A command-line account or domain discovery tool ran.",
+    "enabled": true,
+    "groups": [
+     "process-execution",
+     "discovery"
+    ],
+    "id": "sentinel_account_discovery",
+    "level": 4,
+    "mitre": [
+     "T1087.001",
+     "T1018"
+    ],
+    "source": [
+     "process"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": null,
+      "field": "process",
+      "not_one_of": null,
+      "one_of": [
+       "whoami.exe",
+       "net.exe",
+       "net1.exe",
+       "nltest.exe",
+       "dsquery.exe",
+       "dsacls.exe",
+       "query.exe",
+       "systeminfo.exe"
+      ],
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "An account was added to the local Administrators group.",
+    "enabled": true,
+    "groups": [
+     "authentication",
+     "privilege-escalation",
+     "account-management"
+    ],
+    "id": "sentinel_added_to_administrators",
+    "level": 11,
+    "mitre": [
+     "T1098.001"
+    ],
+    "source": [
+     "log"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "winlog_4732_member_added_to_administrators",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "A burst of failed logons on one host across accounts - password guessing.",
+    "enabled": true,
+    "groups": [
+     "authentication",
+     "brute-force"
+    ],
+    "id": "sentinel_bruteforce_host",
+    "level": 6,
+    "mitre": [
+     "T1110"
+    ],
+    "source": [
+     "log"
+    ],
+    "threshold": {
+     "count": 20,
+     "group_by": [
+      "host"
+     ],
+     "seconds": 300
+    },
+    "when": [
+     {
+      "contains": null,
+      "equals": "winlog_4625_failed_logon",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "Repeated failed logons against the same account on one host.",
+    "enabled": true,
+    "groups": [
+     "authentication",
+     "brute-force"
+    ],
+    "id": "sentinel_bruteforce_local_account",
+    "level": 7,
+    "mitre": [
+     "T1110.003"
+    ],
+    "source": [
+     "log"
+    ],
+    "threshold": {
+     "count": 5,
+     "group_by": [
+      "host",
+      "user"
+     ],
+     "seconds": 120
+    },
+    "when": [
+     {
+      "contains": null,
+      "equals": "winlog_4625_failed_logon",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "Command line associated with credential theft or LSASS memory dumping.",
+    "enabled": true,
+    "groups": [
+     "process-execution",
+     "credential-access"
+    ],
+    "id": "sentinel_credential_dumping",
+    "level": 14,
+    "mitre": [
+     "T1003.001"
+    ],
+    "source": [
+     "process"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": null,
+      "field": "command_line",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "mimikatz|sekurlsa|lsass\\.dmp|comsvcs\\.dll.*25938|ntds\\.dit|sam\\.hive|security\\.hive|procdump.*lsass"
+     }
+    ]
+   },
+   {
+    "description": "An unusual volume of new outbound DNS connections from one host.",
+    "enabled": true,
+    "groups": [
+     "network",
+     "exfiltration"
+    ],
+    "id": "sentinel_dns_flooding_outbound",
+    "level": 6,
+    "mitre": [
+     "T1071.004"
+    ],
+    "source": [
+     "network"
+    ],
+    "threshold": {
+     "count": 20,
+     "group_by": [
+      "src_ip"
+     ],
+     "seconds": 120
+    },
+    "when": [
+     {
+      "contains": null,
+      "equals": "outbound_connection_new",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": 53,
+      "field": "dst_port",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "A file-integrity baseline was created for the configured watch roots.",
+    "enabled": true,
+    "groups": [
+     "file-integrity",
+     "housekeeping"
+    ],
+    "id": "sentinel_fim_baseline_established",
+    "level": 0,
+    "mitre": [],
+    "source": [
+     "fim"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "fim_baseline_created",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "A file appeared inside a watched path.",
+    "enabled": true,
+    "groups": [
+     "file-integrity"
+    ],
+    "id": "sentinel_fim_file_added",
+    "level": 3,
+    "mitre": [],
+    "source": [
+     "fim"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "fim_added",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "A watched file disappeared - the shape of log or artifact cleanup.",
+    "enabled": true,
+    "groups": [
+     "file-integrity",
+     "defense-evasion"
+    ],
+    "id": "sentinel_fim_file_deleted",
+    "level": 4,
+    "mitre": [
+     "T1070.004"
+    ],
+    "source": [
+     "fim"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "fim_deleted",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "A watched file's contents changed (its SHA-256 differs from the baseline).",
+    "enabled": true,
+    "groups": [
+     "file-integrity"
+    ],
+    "id": "sentinel_fim_file_modified",
+    "level": 4,
+    "mitre": [
+     "T1565.001"
+    ],
+    "source": [
+     "fim"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "fim_modified",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "An executable under the Windows system directory changed or appeared.",
+    "enabled": true,
+    "groups": [
+     "file-integrity",
+     "privilege-escalation"
+    ],
+    "id": "sentinel_fim_system_binary_changed",
+    "level": 12,
+    "mitre": [
+     "T1014",
+     "T1036.001"
+    ],
+    "source": [
+     "fim"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": null,
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": [
+       "fim_added",
+       "fim_modified"
+      ],
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "path",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "[/\\\\]windows[/\\\\]system32[/\\\\].*\\.(exe|dll|sys|dll\\.cached)$"
+     }
+    ]
+   },
+   {
+    "description": "Content appeared in a web publication root - the webshell landing pattern.",
+    "enabled": true,
+    "groups": [
+     "file-integrity",
+     "persistence"
+    ],
+    "id": "sentinel_fim_web_content_written",
+    "level": 9,
+    "mitre": [
+     "T1505.003"
+    ],
+    "source": [
+     "fim"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": null,
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": [
+       "fim_added",
+       "fim_modified"
+      ],
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "path",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "(wwwroot|inetpub|htdocs|public_html|web\\.content)"
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "path",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "\\.(aspx?|php|jsp|html?|ashx|config)$"
+     }
+    ]
+   },
+   {
+    "description": "A host firewall profile was observed disabled.",
+    "enabled": true,
+    "groups": [
+     "configuration",
+     "defense-evasion"
+    ],
+    "id": "sentinel_firewall_check_failed",
+    "level": 8,
+    "mitre": [
+     "T1562.001"
+    ],
+    "source": null,
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "config_check_fail",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": "firewall",
+      "equals": null,
+      "field": "check_id",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "A logon by the built-in Guest account, which should stay disabled.",
+    "enabled": true,
+    "groups": [
+     "authentication",
+     "windows"
+    ],
+    "id": "sentinel_guest_account_activity",
+    "level": 6,
+    "mitre": [
+     "T1078.001"
+    ],
+    "source": [
+     "log"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": null,
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": [
+       "winlog_4624_logon",
+       "winlog_4720_user_created"
+      ],
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": "guest",
+      "field": "user",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "The built-in Guest account is enabled where the baseline says it must be disabled.",
+    "enabled": true,
+    "groups": [
+     "configuration",
+     "authentication"
+    ],
+    "id": "sentinel_guest_account_enabled",
+    "level": 5,
+    "mitre": [
+     "T1078.001"
+    ],
+    "source": null,
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "config_check_fail",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": "guest_account_disabled",
+      "field": "check_id",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "A shell interpreter appeared whose parent is a service binary rather than a console.",
+    "enabled": true,
+    "groups": [
+     "process-execution",
+     "privilege-escalation"
+    ],
+    "id": "sentinel_interactive_shell_from_service",
+    "level": 8,
+    "mitre": [
+     "T1543.003",
+     "T1059.001"
+    ],
+    "source": [
+     "process"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "process_new",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": "services.exe",
+      "field": "parent_process",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "process",
+      "not_one_of": null,
+      "one_of": [
+       "cmd.exe",
+       "powershell.exe",
+       "pwsh.exe",
+       "wscript.exe",
+       "cscript.exe"
+      ],
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "An outbound connection to a remote-administration or file-share service port.",
+    "enabled": true,
+    "groups": [
+     "network",
+     "lateral-movement"
+    ],
+    "id": "sentinel_lateral_admin_port",
+    "level": 6,
+    "mitre": [
+     "T1021.002",
+     "T1021.001"
+    ],
+    "source": [
+     "network"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "outbound_connection_new",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "dst_port",
+      "not_one_of": null,
+      "one_of": [
+       "135",
+       "139",
+       "445",
+       "3389",
+       "5985",
+       "5986"
+      ],
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "Something is listening on a port associated with commodity shells and tooling.",
+    "enabled": true,
+    "groups": [
+     "network",
+     "command-and-control"
+    ],
+    "id": "sentinel_listener_on_backdoor_port",
+    "level": 10,
+    "mitre": [
+     "T1571"
+    ],
+    "source": [
+     "network"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "listening_port_new",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "src_port",
+      "not_one_of": null,
+      "one_of": [
+       "1337",
+       "31337",
+       "4444",
+       "5555",
+       "6666",
+       "8888",
+       "9001",
+       "1234",
+       "2222"
+      ],
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "A new listening socket appeared on this endpoint.",
+    "enabled": true,
+    "groups": [
+     "network",
+     "windows"
+    ],
+    "id": "sentinel_listener_started",
+    "level": 1,
+    "mitre": [],
+    "source": [
+     "network"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "listening_port_new",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "A new local account was created on this endpoint.",
+    "enabled": true,
+    "groups": [
+     "authentication",
+     "account-management"
+    ],
+    "id": "sentinel_local_account_created",
+    "level": 8,
+    "mitre": [
+     "T1136.001"
+    ],
+    "source": [
+     "log"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "winlog_4720_user_created",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "Repeated requests reached an administrative or credential endpoint.",
+    "enabled": true,
+    "groups": [
+     "log-signature",
+     "web-attack"
+    ],
+    "id": "sentinel_log_credential_endpoint_probe",
+    "level": 5,
+    "mitre": [
+     "T1190",
+     "T1110"
+    ],
+    "source": [
+     "log"
+    ],
+    "threshold": {
+     "count": 10,
+     "group_by": [
+      "path"
+     ],
+     "seconds": 120
+    },
+    "when": [
+     {
+      "contains": null,
+      "equals": "log_line",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "message",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "wp-login\\.php|/xmlrpc\\.php|phpmyadmin|/\\.env|/wp-admin/admin-ajax\\.php"
+     }
+    ]
+   },
+   {
+    "description": "A watched log line carries a directory traversal or sensitive-file signature.",
+    "enabled": true,
+    "groups": [
+     "log-signature",
+     "web-attack"
+    ],
+    "id": "sentinel_log_path_traversal_pattern",
+    "level": 8,
+    "mitre": [
+     "T1083"
+    ],
+    "source": [
+     "log"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "log_line",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "message",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "(\\.\\./){2,}|%2e%2e(%2f|/)|/etc/(passwd|shadow)|\\\\windows\\\\win\\.ini"
+     }
+    ]
+   },
+   {
+    "description": "A scanning tool named itself in a watched log line.",
+    "enabled": true,
+    "groups": [
+     "log-signature",
+     "discovery"
+    ],
+    "id": "sentinel_log_scanner_useragent",
+    "level": 6,
+    "mitre": [
+     "T1595.002"
+    ],
+    "source": [
+     "log"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "log_line",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "message",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "nikto|sqlmap|dirb|gobuster|masscan|nmap\\s+scripting\\s+engine"
+     }
+    ]
+   },
+   {
+    "description": "A watched log line carries an inline script or event-handler signature.",
+    "enabled": true,
+    "groups": [
+     "log-signature",
+     "web-attack"
+    ],
+    "id": "sentinel_log_script_injection_pattern",
+    "level": 7,
+    "mitre": [
+     "T1059.007"
+    ],
+    "source": [
+     "log"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "log_line",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "message",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "<script|onerror\\s*=|onload\\s*=|javascript:"
+     }
+    ]
+   },
+   {
+    "description": "A watched log line carries a SQL injection signature.",
+    "enabled": true,
+    "groups": [
+     "log-signature",
+     "web-attack"
+    ],
+    "id": "sentinel_log_sql_injection_pattern",
+    "level": 9,
+    "mitre": [
+     "T1190"
+    ],
+    "source": [
+     "log"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "log_line",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "message",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "union(\\s|\\+|%20)select|'\\s*or\\s*'1'='1|or\\s+1=1|;\\s*drop\\s+table|xp_cmdshell\\s*\\("
+     }
+    ]
+   },
+   {
+    "description": "A burst of authentication failures in one watched log file.",
+    "enabled": true,
+    "groups": [
+     "log-signature",
+     "brute-force"
+    ],
+    "id": "sentinel_log_text_auth_failure_burst",
+    "level": 7,
+    "mitre": [
+     "T1110"
+    ],
+    "source": [
+     "log"
+    ],
+    "threshold": {
+     "count": 10,
+     "group_by": [
+      "path"
+     ],
+     "seconds": 120
+    },
+    "when": [
+     {
+      "contains": null,
+      "equals": "log_line",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "message",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "failed password|authentication failure|invalid user|access denied for user"
+     }
+    ]
+   },
+   {
+    "description": "A failed logon was recorded on this endpoint.",
+    "enabled": true,
+    "groups": [
+     "authentication",
+     "windows"
+    ],
+    "id": "sentinel_logon_failure_recorded",
+    "level": 1,
+    "mitre": [
+     "T1110"
+    ],
+    "source": [
+     "log"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "winlog_4625_failed_logon",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "A signed Windows utility used the way a living-off-the-land binary is used.",
+    "enabled": true,
+    "groups": [
+     "process-execution",
+     "defense-evasion"
+    ],
+    "id": "sentinel_lolbin_abuse",
+    "level": 11,
+    "mitre": [
+     "T1218",
+     "T1105"
+    ],
+    "source": [
+     "process"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": null,
+      "field": "command_line",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "certutil.*(\\-decode|\\-urlcache|\\-encode)|rundll32.*(javascript|vbscript)|mshta\\.(exe|http)|regsvr32.*/i:|bitsadmin.*/transfer|wmic.*process\\s+call\\s+create|installutil.*(\\-/|/logfile=)"
+     }
+    ]
+   },
+   {
+    "description": "A document application spawned a script interpreter - the macro execution chain.",
+    "enabled": true,
+    "groups": [
+     "process-execution",
+     "initial-access"
+    ],
+    "id": "sentinel_office_spawns_interpreter",
+    "level": 13,
+    "mitre": [
+     "T1204.002",
+     "T1059"
+    ],
+    "source": [
+     "process"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": true,
+      "field": "suspicious_parent_child",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "Repeated new connections to one destination port - a beacon-shaped cadence.",
+    "enabled": true,
+    "groups": [
+     "network",
+     "command-and-control"
+    ],
+    "id": "sentinel_outbound_beacon",
+    "level": 9,
+    "mitre": [
+     "T1071.001"
+    ],
+    "source": [
+     "network"
+    ],
+    "threshold": {
+     "count": 6,
+     "group_by": [
+      "dst_ip",
+      "dst_port"
+     ],
+     "seconds": 300
+    },
+    "when": [
+     {
+      "contains": null,
+      "equals": "outbound_connection_new",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "An outbound connection left for a port outside the configured common set.",
+    "enabled": true,
+    "groups": [
+     "network",
+     "command-and-control"
+    ],
+    "id": "sentinel_outbound_uncommon_port",
+    "level": 5,
+    "mitre": [
+     "T1090.003"
+    ],
+    "source": [
+     "network"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "outbound_connection_new",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": true,
+      "field": "uncommon_destination_port",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "The local password policy is weaker than the platform baseline.",
+    "enabled": true,
+    "groups": [
+     "configuration"
+    ],
+    "id": "sentinel_password_policy_weak",
+    "level": 4,
+    "mitre": [],
+    "source": null,
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "config_check_fail",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "check_id",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "^password_"
+     }
+    ]
+   },
+   {
+    "description": "Failed logons from one source address spread over several accounts.",
+    "enabled": true,
+    "groups": [
+     "authentication",
+     "brute-force"
+    ],
+    "id": "sentinel_password_spray_source",
+    "level": 9,
+    "mitre": [
+     "T1110.004"
+    ],
+    "source": [
+     "log"
+    ],
+    "threshold": {
+     "count": 5,
+     "group_by": [
+      "src_ip"
+     ],
+     "seconds": 300
+    },
+    "when": [
+     {
+      "contains": null,
+      "equals": "winlog_4625_failed_logon",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "src_ip",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "^[0-9]{1,3}(\\.[0-9]{1,3}){3}$"
+     }
+    ]
+   },
+   {
+    "description": "Many new connections to one destination address on different ports - a port sweep.",
+    "enabled": true,
+    "groups": [
+     "network",
+     "discovery"
+    ],
+    "id": "sentinel_port_sweep",
+    "level": 8,
+    "mitre": [
+     "T1046"
+    ],
+    "source": [
+     "network"
+    ],
+    "threshold": {
+     "count": 15,
+     "group_by": [
+      "dst_ip"
+     ],
+     "seconds": 60
+    },
+    "when": [
+     {
+      "contains": null,
+      "equals": "outbound_connection_new",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "PowerShell started with an encoded command, which hides the payload from the name.",
+    "enabled": true,
+    "groups": [
+     "process-execution",
+     "obfuscation"
+    ],
+    "id": "sentinel_powershell_encoded_command",
+    "level": 9,
+    "mitre": [
+     "T1059.001",
+     "T1027"
+    ],
+    "source": [
+     "process"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": "powershell",
+      "equals": null,
+      "field": "process",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "command_line",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "-en(c\\s|codedcommand)|\\bfrombase64\\b"
+     }
+    ]
+   },
+   {
+    "description": "A logon by an account whose name says built-in administrator.",
+    "enabled": true,
+    "groups": [
+     "authentication",
+     "privileged"
+    ],
+    "id": "sentinel_privileged_account_logon",
+    "level": 4,
+    "mitre": [
+     "T1078"
+    ],
+    "source": [
+     "log"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "winlog_4624_logon",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "user",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "administrator|admin$"
+     }
+    ]
+   },
+   {
+    "description": "A process ran from a temporary or download directory.",
+    "enabled": true,
+    "groups": [
+     "process-execution",
+     "windows"
+    ],
+    "id": "sentinel_process_from_staging_dir",
+    "level": 7,
+    "mitre": [
+     "T1036"
+    ],
+    "source": [
+     "process"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": true,
+      "field": "executed_from_staging_dir",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "A scheduled task was created (Security 4698).",
+    "enabled": true,
+    "groups": [
+     "persistence",
+     "windows"
+    ],
+    "id": "sentinel_scheduled_task_created",
+    "level": 8,
+    "mitre": [
+     "T1053.005"
+    ],
+    "source": [
+     "log"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "winlog_4698_scheduled_task_created",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "A script interpreter pulls a second stage over the network.",
+    "enabled": true,
+    "groups": [
+     "process-execution",
+     "command-and-control"
+    ],
+    "id": "sentinel_script_downloads_payload",
+    "level": 10,
+    "mitre": [
+     "T1105",
+     "T1059"
+    ],
+    "source": [
+     "process"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": null,
+      "field": "process",
+      "not_one_of": null,
+      "one_of": [
+       "powershell.exe",
+       "pwsh.exe",
+       "cmd.exe",
+       "wscript.exe",
+       "cscript.exe",
+       "mshta.exe"
+      ],
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "command_line",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "downloadstring|downloadfile|invoke-webrequest|invoke-restmethod|startbitstransfer|new-object\\s+system\\.net\\.webclient"
+     }
+    ]
+   },
+   {
+    "description": "A collector hit its per-cycle event cap, so some changes were deferred, not dropped.",
+    "enabled": true,
+    "groups": [
+     "agent-health",
+     "tuning"
+    ],
+    "id": "sentinel_sensor_cycle_truncated",
+    "level": 3,
+    "mitre": [],
+    "source": null,
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": null,
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": [
+       "processes_truncated",
+       "network_truncated",
+       "log_files_degraded"
+      ],
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "A collector reported that it could not complete its read; coverage is partial.",
+    "enabled": true,
+    "groups": [
+     "agent-health",
+     "availability"
+    ],
+    "id": "sentinel_sensor_degraded",
+    "level": 5,
+    "mitre": [],
+    "source": null,
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": true,
+      "field": "degraded",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "An event-log read was refused - the endpoint needs an elevated agent for full coverage.",
+    "enabled": true,
+    "groups": [
+     "agent-health",
+     "availability"
+    ],
+    "id": "sentinel_sensor_needs_elevation",
+    "level": 6,
+    "mitre": [],
+    "source": null,
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": null,
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": [
+       "event_log_degraded",
+       "processes_degraded",
+       "network_degraded",
+       "config_check_degraded"
+      ],
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "message",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "elevation|access denied|requires admin|permission|refused"
+     }
+    ]
+   },
+   {
+    "description": "A new service was installed (Security 7045), a common way to get a SYSTEM process.",
+    "enabled": true,
+    "groups": [
+     "persistence",
+     "privilege-escalation"
+    ],
+    "id": "sentinel_service_installed",
+    "level": 10,
+    "mitre": [
+     "T1543.003"
+    ],
+    "source": [
+     "log"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "winlog_7045_service_installed",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "A service was installed under an account that is not one of the built-in service accounts.",
+    "enabled": true,
+    "groups": [
+     "persistence",
+     "privilege-escalation"
+    ],
+    "id": "sentinel_service_installed_unusual_account",
+    "level": 12,
+    "mitre": [
+     "T1543.003"
+    ],
+    "source": [
+     "log"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "winlog_7045_service_installed",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "user",
+      "not_one_of": [
+       "local system",
+       "network service",
+       "system service",
+       "localservice",
+       "netservice",
+       "system",
+       "nt authority\\local service",
+       "nt authority\\network service",
+       "nt authority\\system"
+      ],
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "An event arrived marked simulated, so anything built on it is demo content.",
+    "enabled": true,
+    "groups": [
+     "provenance"
+    ],
+    "id": "sentinel_simulated_data_present",
+    "level": 1,
+    "mitre": [],
+    "source": null,
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": true,
+      "field": "is_simulated",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     }
+    ]
+   },
+   {
+    "description": "An executable landed in a per-user temporary directory.",
+    "enabled": true,
+    "groups": [
+     "persistence",
+     "file-integrity"
+    ],
+    "id": "sentinel_staged_binary_in_temp",
+    "level": 6,
+    "mitre": [
+     "T1036.001",
+     "T1105"
+    ],
+    "source": [
+     "fim"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": null,
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": [
+       "fim_added",
+       "fim_modified"
+      ],
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "path",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "[/\\\\]appdata[/\\\\]local[/\\\\]temp[/\\\\]"
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "path",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "\\.(exe|dll|ps1|vbs|js|bat|cmd|scr)$"
+     }
+    ]
+   },
+   {
+    "description": "A file appeared in a Start Menu Startup folder.",
+    "enabled": true,
+    "groups": [
+     "persistence",
+     "file-integrity"
+    ],
+    "id": "sentinel_startup_folder_write",
+    "level": 9,
+    "mitre": [
+     "T1547.001"
+    ],
+    "source": [
+     "fim"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "fim_added",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "path",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "start ?menus?[/\\\\]programs[/\\\\]start ?up"
+     }
+    ]
+   },
+   {
+    "description": "A task definition file appeared under the system Task Store.",
+    "enabled": true,
+    "groups": [
+     "persistence",
+     "file-integrity"
+    ],
+    "id": "sentinel_task_store_file_added",
+    "level": 10,
+    "mitre": [
+     "T1053.005"
+    ],
+    "source": [
+     "fim"
+    ],
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "fim_added",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "path",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": "[/\\\\]system32[/\\\\]tasks[/\\\\]"
+     }
+    ]
+   },
+   {
+    "description": "UAC is disabled or Windows Update is not set to start automatically.",
+    "enabled": true,
+    "groups": [
+     "configuration",
+     "defense-evasion"
+    ],
+    "id": "sentinel_uac_or_update_autostart_off",
+    "level": 6,
+    "mitre": [
+     "T1562.001"
+    ],
+    "source": null,
+    "threshold": null,
+    "when": [
+     {
+      "contains": null,
+      "equals": "config_check_fail",
+      "field": "event_type",
+      "not_one_of": null,
+      "one_of": null,
+      "regex": null
+     },
+     {
+      "contains": null,
+      "equals": null,
+      "field": "check_id",
+      "not_one_of": null,
+      "one_of": [
+       "uac_enabled",
+       "windows_update_autostart"
+      ],
+      "regex": null
+     }
+    ]
+   }
+  ]
+ },
+ "status": 200
+}

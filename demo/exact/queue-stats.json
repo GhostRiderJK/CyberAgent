@@ -1,0 +1,64 @@
+{
+ "body": {
+  "breaker": {
+   "consecutive_failures": 0,
+   "failure_threshold": 3,
+   "failures_total": 0,
+   "installed": true,
+   "name": "llm",
+   "reset_seconds": 30.0,
+   "retry_in_seconds": null,
+   "state": "closed",
+   "successes_total": 0,
+   "trips": 0
+  },
+  "counts_from": "job_queue rows for the five states; breaker_state from cyberagent.breaker; worker_capacity from the worker pool",
+  "documents_backend": "mongo",
+  "queue": {
+   "breaker_state": "closed",
+   "dead": 0,
+   "done": 121,
+   "failed": 0,
+   "pending": 0,
+   "running": 0,
+   "worker_capacity": 2
+  },
+  "rows_backend": "memory",
+  "worker_pool": {
+   "completed": 121,
+   "failed_permanent": 0,
+   "installed": true,
+   "jobs_handled": 121,
+   "jobs_in_flight": {},
+   "last_error": null,
+   "recovered_after_stale_lease": 0,
+   "retried": 0,
+   "settings": {
+    "env": {
+     "CYBERAGENT_JOB_LEASE_SECONDS": "CYBERAGENT_JOB_LEASE_SECONDS",
+     "CYBERAGENT_LLM_FAILURE_THRESHOLD": "CYBERAGENT_LLM_FAILURE_THRESHOLD",
+     "CYBERAGENT_LLM_RESET_SECONDS": "CYBERAGENT_LLM_RESET_SECONDS",
+     "CYBERAGENT_QUEUE_IDLE_SECONDS": "CYBERAGENT_QUEUE_IDLE_SECONDS",
+     "CYBERAGENT_QUEUE_RETRY_SECONDS": "CYBERAGENT_QUEUE_RETRY_SECONDS",
+     "CYBERAGENT_QUEUE_WORKERS": "CYBERAGENT_QUEUE_WORKERS"
+    },
+    "idle_seconds": 0.25,
+    "lease_seconds": 120,
+    "llm_failure_threshold": 3,
+    "llm_reset_seconds": 30.0,
+    "retry_seconds": 15.0,
+    "worker_slots_max": 16,
+    "workers": 2
+   },
+   "started": true,
+   "threads": [
+    "worker-1",
+    "worker-2"
+   ],
+   "worker_capacity": 2,
+   "worker_slots": 2,
+   "workers_busy": 0
+  }
+ },
+ "status": 200
+}

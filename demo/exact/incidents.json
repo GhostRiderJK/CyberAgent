@@ -1,0 +1,1406 @@
+{
+ "body": {
+  "count": 50,
+  "counts_by": {
+   "archetype": {
+    "arch_command_and_control": 1,
+    "arch_credential_access": 8,
+    "arch_defense_evasion": 2,
+    "arch_denial_of_service": 3,
+    "arch_lateral_movement": 1,
+    "arch_monitoring_gap": 3,
+    "arch_persistence_and_privesc": 3,
+    "arch_reconnaissance": 3,
+    "arch_suspicious_execution": 1,
+    "arch_web_application_attack": 2,
+    "null": 116
+   },
+   "is_simulated": {
+    "true": 143
+   },
+   "severity": {
+    "critical": 4,
+    "high": 9,
+    "informational": 116,
+    "low": 3,
+    "medium": 11
+   },
+   "status": {
+    "investigating": 7,
+    "open": 136
+   }
+  },
+  "counts_scope": "whole_table: the aggregates above ignore the filters and page in this response",
+  "documents_backend": "mongo",
+  "filters": {
+   "archetype": null,
+   "severity": null,
+   "status": null
+  },
+  "grouping": "incidents are grouped deterministically by shared host/address/user inside an attack family and a sliding time window; no model and no LLM decides the grouping, and an incident is a correlation, not a proven single cause",
+  "incidents": [
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-07-07T16:16:00Z",
+    "group_key": "label:BENIGN|ip:172.16.0.1#002",
+    "hosts": [],
+    "incident_id": "inc-a3b458db83608445",
+    "ips": [
+     "172.16.0.1",
+     "192.168.10.50"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-07-07T16:16:00Z",
+    "opened_at": "2026-10-29T08:09:47.851829Z",
+    "severity": "informational",
+    "severity_score": 0.999856428708101,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 172.16.0.1",
+    "updated_at": "2026-10-29T08:09:47.854392Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-06-07T13:28:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.15#008",
+    "hosts": [],
+    "incident_id": "inc-12a2ae1f718917b5",
+    "ips": [
+     "192.168.10.15",
+     "23.194.108.193"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-06-07T13:28:00Z",
+    "opened_at": "2026-10-29T08:09:47.851810Z",
+    "severity": "informational",
+    "severity_score": 0.9999788272165202,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.15",
+    "updated_at": "2026-10-29T08:09:47.857594Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-04-07T10:30:00Z",
+    "group_key": "label:BENIGN|ip:104.88.89.135#001",
+    "hosts": [],
+    "incident_id": "inc-7ba83ae3db0ae0c7",
+    "ips": [
+     "104.88.89.135",
+     "192.168.10.17"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-04-07T10:30:00Z",
+    "opened_at": "2026-10-29T08:09:47.851792Z",
+    "severity": "informational",
+    "severity_score": 0.9999263206063259,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 104.88.89.135",
+    "updated_at": "2026-10-29T08:09:47.862996Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": "arch_web_application_attack",
+    "first_event_at": "2017-06-07T10:26:00Z",
+    "group_key": "arch:arch_web_application_attack|ip:172.16.0.1#001",
+    "hosts": [],
+    "incident_id": "inc-d3dabf5c1d74c2f9",
+    "ips": [
+     "172.16.0.1",
+     "192.168.10.50"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-06-07T10:26:00Z",
+    "opened_at": "2026-10-29T08:09:47.851772Z",
+    "severity": "high",
+    "severity_score": 7.999795548266534,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "Web application attack on 172.16.0.1",
+    "updated_at": "2026-10-29T08:09:47.858292Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-04-07T12:02:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.1#005",
+    "hosts": [],
+    "incident_id": "inc-d6d030b85a6b97b4",
+    "ips": [
+     "192.168.10.1",
+     "192.168.10.3"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-04-07T12:02:00Z",
+    "opened_at": "2026-10-29T08:09:47.851750Z",
+    "severity": "informational",
+    "severity_score": 0.9999864583238846,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.1",
+    "updated_at": "2026-10-29T08:09:47.862917Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-07-07T16:56:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.8#009",
+    "hosts": [],
+    "incident_id": "inc-e05b33568a070f73",
+    "ips": [
+     "192.168.10.8",
+     "216.58.219.202"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-07-07T16:56:00Z",
+    "opened_at": "2026-10-29T08:09:47.851731Z",
+    "severity": "informational",
+    "severity_score": 0.9999415067981027,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.8",
+    "updated_at": "2026-10-29T08:09:47.854262Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-06-07T09:57:00Z",
+    "group_key": "label:BENIGN|ip:172.16.0.1#001",
+    "hosts": [],
+    "incident_id": "inc-2685d11e6d835316",
+    "ips": [
+     "172.16.0.1",
+     "192.168.10.50"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-06-07T09:57:00Z",
+    "opened_at": "2026-10-29T08:09:47.851712Z",
+    "severity": "informational",
+    "severity_score": 0.9998881493900545,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 172.16.0.1",
+    "updated_at": "2026-10-29T08:09:47.858431Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-06-07T11:46:00Z",
+    "group_key": "label:BENIGN|ip:104.74.9.130#001",
+    "hosts": [],
+    "incident_id": "inc-a4532ce601cf4f6e",
+    "ips": [
+     "104.74.9.130",
+     "192.168.10.15"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-06-07T11:46:00Z",
+    "opened_at": "2026-10-29T08:09:47.851694Z",
+    "severity": "informational",
+    "severity_score": 0.9995058333645935,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 104.74.9.130",
+    "updated_at": "2026-10-29T08:09:47.858016Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-06-07T15:41:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.1#015",
+    "hosts": [],
+    "incident_id": "inc-b1e2fdabe7ca45cc",
+    "ips": [
+     "192.168.10.1",
+     "192.168.10.3"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-06-07T15:41:00Z",
+    "opened_at": "2026-10-29T08:09:47.851675Z",
+    "severity": "informational",
+    "severity_score": 0.9999864345262721,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.1",
+    "updated_at": "2026-10-29T08:09:47.857153Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-07-07T13:52:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.12#009",
+    "hosts": [],
+    "incident_id": "inc-86f5ab2199e14508",
+    "ips": [
+     "192.168.10.12",
+     "192.168.10.3"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-07-07T13:52:00Z",
+    "opened_at": "2026-10-29T08:09:47.851656Z",
+    "severity": "informational",
+    "severity_score": 0.999986519683982,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.12",
+    "updated_at": "2026-10-29T08:09:47.855922Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-05-07T16:55:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.1#013",
+    "hosts": [],
+    "incident_id": "inc-436d7d42c4316d6f",
+    "ips": [
+     "192.168.10.1",
+     "192.168.10.3"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-05-07T16:55:00Z",
+    "opened_at": "2026-10-29T08:09:47.851632Z",
+    "severity": "informational",
+    "severity_score": 0.9999864345262721,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.1",
+    "updated_at": "2026-10-29T08:09:47.858502Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-05-07T10:49:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.1#007",
+    "hosts": [],
+    "incident_id": "inc-71ae0a0065eebbfa",
+    "ips": [
+     "192.168.10.1",
+     "192.168.10.3"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-05-07T10:49:00Z",
+    "opened_at": "2026-10-29T08:09:47.851613Z",
+    "severity": "informational",
+    "severity_score": 0.9999864345262721,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.1",
+    "updated_at": "2026-10-29T08:09:47.860944Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-05-07T15:39:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.1#012",
+    "hosts": [],
+    "incident_id": "inc-e3da6a155d4e975d",
+    "ips": [
+     "192.168.10.1",
+     "192.168.10.3"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-05-07T15:39:00Z",
+    "opened_at": "2026-10-29T08:09:47.851593Z",
+    "severity": "informational",
+    "severity_score": 0.9999864345262721,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.1",
+    "updated_at": "2026-10-29T08:09:47.858865Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-07-07T15:31:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.15#014",
+    "hosts": [],
+    "incident_id": "inc-65b2cb3e813f4575",
+    "ips": [
+     "192.168.10.15",
+     "192.168.10.3"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-07-07T15:31:00Z",
+    "opened_at": "2026-10-29T08:09:47.851574Z",
+    "severity": "informational",
+    "severity_score": 0.99998621601892,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.15",
+    "updated_at": "2026-10-29T08:09:47.855165Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-03-07T12:31:22Z",
+    "group_key": "label:BENIGN|ip:192.168.10.25#003",
+    "hosts": [],
+    "incident_id": "inc-ef46620d89efd5c7",
+    "ips": [
+     "192.168.10.25",
+     "52.71.109.106"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-03-07T12:31:22Z",
+    "opened_at": "2026-10-29T08:09:47.851554Z",
+    "severity": "informational",
+    "severity_score": 0.9999725440318864,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.25",
+    "updated_at": "2026-10-29T08:09:47.864801Z",
+    "users": []
+   },
+   {
+    "alert_count": 2,
+    "archetype": null,
+    "first_event_at": "2017-07-07T14:22:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.12#010",
+    "hosts": [],
+    "incident_id": "inc-945645701daf2ce4",
+    "ips": [
+     "192.168.10.12",
+     "192.168.10.25",
+     "192.168.10.50"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-07-07T14:22:00Z",
+    "opened_at": "2026-10-29T08:09:47.851532Z",
+    "severity": "informational",
+    "severity_score": 1.9952016700920556,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.12",
+    "updated_at": "2026-10-29T08:09:47.855717Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-03-07T11:03:33Z",
+    "group_key": "label:BENIGN|ip:157.240.18.19#001",
+    "hosts": [],
+    "incident_id": "inc-fb083f0132642b38",
+    "ips": [
+     "157.240.18.19",
+     "192.168.10.12"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-03-07T11:03:33Z",
+    "opened_at": "2026-10-29T08:09:47.851505Z",
+    "severity": "informational",
+    "severity_score": 0.9998938016918687,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 157.240.18.19",
+    "updated_at": "2026-10-29T08:09:47.865242Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-07-07T15:53:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.50#012",
+    "hosts": [],
+    "incident_id": "inc-f9978fb4eaf6d68a",
+    "ips": [
+     "192.168.10.50",
+     "192.168.10.9"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-07-07T15:53:00Z",
+    "opened_at": "2026-10-29T08:09:47.851486Z",
+    "severity": "informational",
+    "severity_score": 0.9997519639490996,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.50",
+    "updated_at": "2026-10-29T08:09:47.854931Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-06-07T16:07:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.3#029",
+    "hosts": [],
+    "incident_id": "inc-5488c623dbd3085d",
+    "ips": [
+     "192.168.10.3",
+     "192.168.10.5"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-06-07T16:07:00Z",
+    "opened_at": "2026-10-29T08:09:47.851464Z",
+    "severity": "informational",
+    "severity_score": 0.9999866570463506,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.3",
+    "updated_at": "2026-10-29T08:09:47.856973Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-05-07T15:02:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.19#003",
+    "hosts": [],
+    "incident_id": "inc-852accf52cf9ae5b",
+    "ips": [
+     "192.168.10.19",
+     "27.0.236.89"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-05-07T15:02:00Z",
+    "opened_at": "2026-10-29T08:09:47.851441Z",
+    "severity": "informational",
+    "severity_score": 0.9999733623141459,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.19",
+    "updated_at": "2026-10-29T08:09:47.859023Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-04-07T12:59:00Z",
+    "group_key": "label:BENIGN|ip:8.0.6.4#002",
+    "hosts": [],
+    "incident_id": "inc-33aefcbe054be923",
+    "ips": [
+     "8.0.6.4",
+     "8.6.0.1"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-04-07T12:59:00Z",
+    "opened_at": "2026-10-29T08:09:47.851421Z",
+    "severity": "informational",
+    "severity_score": 0.9993924623058804,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 8.0.6.4",
+    "updated_at": "2026-10-29T08:09:47.862839Z",
+    "users": []
+   },
+   {
+    "alert_count": 2,
+    "archetype": null,
+    "first_event_at": "2017-07-07T10:02:00Z",
+    "group_key": "label:BENIGN|ip:104.196.190.141#001",
+    "hosts": [],
+    "incident_id": "inc-5ab5db9ade97edc6",
+    "ips": [
+     "104.196.190.141",
+     "157.240.2.25",
+     "192.168.10.5"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-07-07T10:03:00Z",
+    "opened_at": "2026-10-29T08:09:47.851401Z",
+    "severity": "informational",
+    "severity_score": 2.027857798465834,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 104.196.190.141",
+    "updated_at": "2026-10-29T08:09:47.856555Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-07-07T13:59:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.16#010",
+    "hosts": [],
+    "incident_id": "inc-761f722610fbaa5c",
+    "ips": [
+     "192.168.10.16",
+     "23.194.141.179"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-07-07T13:59:00Z",
+    "opened_at": "2026-10-29T08:09:47.851375Z",
+    "severity": "informational",
+    "severity_score": 0.9999725200621032,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.16",
+    "updated_at": "2026-10-29T08:09:47.855856Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-06-07T12:43:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.51#005",
+    "hosts": [],
+    "incident_id": "inc-a23b7f4f26361e86",
+    "ips": [
+     "192.168.10.51",
+     "198.51.152.183"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-06-07T12:43:00Z",
+    "opened_at": "2026-10-29T08:09:47.851356Z",
+    "severity": "informational",
+    "severity_score": 0.9999722162673833,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.51",
+    "updated_at": "2026-10-29T08:09:47.857800Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-04-07T13:28:00Z",
+    "group_key": "label:BENIGN|ip:112.121.107.6#001",
+    "hosts": [],
+    "incident_id": "inc-a533236c9c686ac6",
+    "ips": [
+     "112.121.107.6",
+     "192.168.10.17"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-04-07T13:28:00Z",
+    "opened_at": "2026-10-29T08:09:47.851337Z",
+    "severity": "informational",
+    "severity_score": 0.9997675932715165,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 112.121.107.6",
+    "updated_at": "2026-10-29T08:09:47.862761Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-06-07T16:50:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.51#007",
+    "hosts": [],
+    "incident_id": "inc-1c5bb2fd9b086ce1",
+    "ips": [
+     "192.168.10.51",
+     "72.21.91.29"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-06-07T16:50:00Z",
+    "opened_at": "2026-10-29T08:09:47.851315Z",
+    "severity": "informational",
+    "severity_score": 0.9998555895981253,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.51",
+    "updated_at": "2026-10-29T08:09:47.856767Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-05-07T11:45:00Z",
+    "group_key": "label:BENIGN|ip:113.207.48.168#001",
+    "hosts": [],
+    "incident_id": "inc-779f5b1dd7130119",
+    "ips": [
+     "113.207.48.168",
+     "192.168.10.9"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-05-07T11:45:00Z",
+    "opened_at": "2026-10-29T08:09:47.851194Z",
+    "severity": "informational",
+    "severity_score": 0.9995250477446028,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 113.207.48.168",
+    "updated_at": "2026-10-29T08:09:47.859899Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-07-07T11:44:00Z",
+    "group_key": "label:BENIGN|ip:172.217.12.162#001",
+    "hosts": [],
+    "incident_id": "inc-ba4d425241109ab9",
+    "ips": [
+     "172.217.12.162",
+     "192.168.10.16"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-07-07T11:44:00Z",
+    "opened_at": "2026-10-29T08:09:47.851173Z",
+    "severity": "informational",
+    "severity_score": 0.9999735412645435,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 172.217.12.162",
+    "updated_at": "2026-10-29T08:09:47.856068Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-07-07T13:34:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.15#012",
+    "hosts": [],
+    "incident_id": "inc-14026b4f9d5691ed",
+    "ips": [
+     "192.168.10.15",
+     "192.168.10.50"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-07-07T13:34:00Z",
+    "opened_at": "2026-10-29T08:09:47.851151Z",
+    "severity": "informational",
+    "severity_score": 0.9999116203564538,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.15",
+    "updated_at": "2026-10-29T08:09:47.855987Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-03-07T12:05:44Z",
+    "group_key": "label:BENIGN|ip:8.0.6.4#001",
+    "hosts": [],
+    "incident_id": "inc-8278fbcca3aa8b53",
+    "ips": [
+     "8.0.6.4",
+     "8.6.0.1"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-03-07T12:05:44Z",
+    "opened_at": "2026-10-29T08:09:47.851131Z",
+    "severity": "informational",
+    "severity_score": 0.9990010971292639,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 8.0.6.4",
+    "updated_at": "2026-10-29T08:09:47.864881Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-03-07T10:50:06Z",
+    "group_key": "label:BENIGN|ip:192.168.10.5#001",
+    "hosts": [],
+    "incident_id": "inc-cce3c12a32c9328c",
+    "ips": [
+     "192.168.10.5",
+     "69.172.216.55"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-03-07T10:50:06Z",
+    "opened_at": "2026-10-29T08:09:47.851111Z",
+    "severity": "informational",
+    "severity_score": 0.9999491300701029,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.5",
+    "updated_at": "2026-10-29T08:09:47.865326Z",
+    "users": []
+   },
+   {
+    "alert_count": 2,
+    "archetype": null,
+    "first_event_at": "2017-03-07T14:31:57Z",
+    "group_key": "label:BENIGN|ip:173.194.175.108#001",
+    "hosts": [],
+    "incident_id": "inc-a94fa7bc13ac2aa2",
+    "ips": [
+     "173.194.175.108",
+     "192.168.10.12",
+     "69.172.216.111"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-03-07T14:33:29Z",
+    "opened_at": "2026-10-29T08:09:47.851089Z",
+    "severity": "informational",
+    "severity_score": 2.05039738882531,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 173.194.175.108",
+    "updated_at": "2026-10-29T08:09:47.864315Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-03-07T11:59:39Z",
+    "group_key": "label:BENIGN|ip:192.168.10.51#001",
+    "hosts": [],
+    "incident_id": "inc-acaf3214f3b326b9",
+    "ips": [
+     "192.168.10.51",
+     "74.119.118.74"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-03-07T11:59:39Z",
+    "opened_at": "2026-10-29T08:09:47.850989Z",
+    "severity": "informational",
+    "severity_score": 0.9999032974019816,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.51",
+    "updated_at": "2026-10-29T08:09:47.864962Z",
+    "users": []
+   },
+   {
+    "alert_count": 2,
+    "archetype": null,
+    "first_event_at": "2017-04-07T15:28:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.16#005",
+    "hosts": [],
+    "incident_id": "inc-35f582c40e4f0771",
+    "ips": [
+     "192.168.10.16",
+     "50.63.243.230",
+     "50.97.40.233"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-04-07T15:32:00Z",
+    "opened_at": "2026-10-29T08:09:47.850969Z",
+    "severity": "informational",
+    "severity_score": 2.133148855775216,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.16",
+    "updated_at": "2026-10-29T08:09:47.861842Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-06-07T16:33:00Z",
+    "group_key": "label:BENIGN|ip:162.213.33.50#001",
+    "hosts": [],
+    "incident_id": "inc-8e99550dc4db212d",
+    "ips": [
+     "162.213.33.50",
+     "192.168.10.51"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-06-07T16:33:00Z",
+    "opened_at": "2026-10-29T08:09:47.850942Z",
+    "severity": "informational",
+    "severity_score": 0.999884767608296,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 162.213.33.50",
+    "updated_at": "2026-10-29T08:09:47.856835Z",
+    "users": []
+   },
+   {
+    "alert_count": 2,
+    "archetype": null,
+    "first_event_at": "2017-05-07T11:38:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.1#009",
+    "hosts": [],
+    "incident_id": "inc-e7b0110d994a3cd9",
+    "ips": [
+     "192.168.10.1",
+     "192.168.10.16",
+     "192.168.10.3"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-05-07T11:53:00Z",
+    "opened_at": "2026-10-29T08:09:47.850923Z",
+    "severity": "informational",
+    "severity_score": 2.499966364465778,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.1",
+    "updated_at": "2026-10-29T08:09:47.859758Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-04-07T15:23:00Z",
+    "group_key": "label:BENIGN|ip:104.25.113.17#001",
+    "hosts": [],
+    "incident_id": "inc-61c4bfbc51926ac2",
+    "ips": [
+     "104.25.113.17",
+     "192.168.10.9"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-04-07T15:23:00Z",
+    "opened_at": "2026-10-29T08:09:47.850897Z",
+    "severity": "informational",
+    "severity_score": 0.9999681109228606,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 104.25.113.17",
+    "updated_at": "2026-10-29T08:09:47.861926Z",
+    "users": []
+   },
+   {
+    "alert_count": 2,
+    "archetype": null,
+    "first_event_at": "2017-05-07T11:08:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.1#008",
+    "hosts": [],
+    "incident_id": "inc-b42374bb62df6d70",
+    "ips": [
+     "192.168.10.1",
+     "192.168.10.3"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-05-07T11:12:00Z",
+    "opened_at": "2026-10-29T08:09:47.850878Z",
+    "severity": "informational",
+    "severity_score": 2.1333044201419384,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.1",
+    "updated_at": "2026-10-29T08:09:47.860405Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-06-07T10:49:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.15#005",
+    "hosts": [],
+    "incident_id": "inc-e1ad1a2d4c694a33",
+    "ips": [
+     "192.168.10.15",
+     "192.168.10.3"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-06-07T10:49:00Z",
+    "opened_at": "2026-10-29T08:09:47.850853Z",
+    "severity": "informational",
+    "severity_score": 0.9999866371539934,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.15",
+    "updated_at": "2026-10-29T08:09:47.858221Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-04-07T16:31:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.12#005",
+    "hosts": [],
+    "incident_id": "inc-d23ecb03aef25835",
+    "ips": [
+     "192.168.10.12",
+     "38.81.32.37"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-04-07T16:31:00Z",
+    "opened_at": "2026-10-29T08:09:47.850833Z",
+    "severity": "informational",
+    "severity_score": 0.9998051975934504,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.12",
+    "updated_at": "2026-10-29T08:09:47.861658Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-07-07T09:14:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.12#008",
+    "hosts": [],
+    "incident_id": "inc-861ac21d2a07b6b9",
+    "ips": [
+     "192.168.10.12",
+     "199.16.156.9"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-07-07T09:14:00Z",
+    "opened_at": "2026-10-29T08:09:47.850813Z",
+    "severity": "informational",
+    "severity_score": 0.9999298222474415,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.12",
+    "updated_at": "2026-10-29T08:09:47.856696Z",
+    "users": []
+   },
+   {
+    "alert_count": 2,
+    "archetype": null,
+    "first_event_at": "2017-05-07T16:39:00Z",
+    "group_key": "label:BENIGN|ip:178.250.0.85#001",
+    "hosts": [],
+    "incident_id": "inc-753b7f4478883c99",
+    "ips": [
+     "178.250.0.85",
+     "192.168.10.14",
+     "74.119.118.82"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-05-07T16:48:00Z",
+    "opened_at": "2026-10-29T08:09:47.850792Z",
+    "severity": "informational",
+    "severity_score": 2.299803175019831,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 178.250.0.85",
+    "updated_at": "2026-10-29T08:09:47.858650Z",
+    "users": []
+   },
+   {
+    "alert_count": 2,
+    "archetype": "arch_credential_access",
+    "first_event_at": "2017-04-07T09:48:00Z",
+    "group_key": "arch:arch_credential_access|ip:172.16.0.1#002",
+    "hosts": [],
+    "incident_id": "inc-931d5564e3497a63",
+    "ips": [
+     "172.16.0.1",
+     "192.168.10.50"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-04-07T09:55:00Z",
+    "opened_at": "2026-10-29T08:09:47.850765Z",
+    "severity": "medium",
+    "severity_score": 8.933197404084185,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "Credential access on 172.16.0.1",
+    "updated_at": "2026-10-29T08:09:47.863335Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-07-07T11:36:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.50#009",
+    "hosts": [],
+    "incident_id": "inc-0e2d2ca5f0e8b273",
+    "ips": [
+     "192.168.10.50",
+     "192.168.10.9"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-07-07T11:36:00Z",
+    "opened_at": "2026-10-29T08:09:47.850735Z",
+    "severity": "informational",
+    "severity_score": 0.9999196498475632,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.50",
+    "updated_at": "2026-10-29T08:09:47.856133Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-04-07T13:47:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.25#006",
+    "hosts": [],
+    "incident_id": "inc-2bc345418a28150f",
+    "ips": [
+     "192.168.10.25",
+     "52.84.145.117"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-04-07T13:47:00Z",
+    "opened_at": "2026-10-29T08:09:47.850714Z",
+    "severity": "informational",
+    "severity_score": 0.9999496557695691,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.25",
+    "updated_at": "2026-10-29T08:09:47.862682Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-06-07T11:42:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.12#006",
+    "hosts": [],
+    "incident_id": "inc-06c04850abb04d74",
+    "ips": [
+     "192.168.10.12",
+     "192.229.173.118"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-06-07T11:42:00Z",
+    "opened_at": "2026-10-29T08:09:47.850694Z",
+    "severity": "informational",
+    "severity_score": 0.9998566342050598,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.12",
+    "updated_at": "2026-10-29T08:09:47.858086Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-04-07T15:22:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.15#002",
+    "hosts": [],
+    "incident_id": "inc-273946782723a012",
+    "ips": [
+     "192.168.10.15",
+     "5.196.119.249"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-04-07T15:22:00Z",
+    "opened_at": "2026-10-29T08:09:47.850675Z",
+    "severity": "informational",
+    "severity_score": 0.9999386955318552,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.15",
+    "updated_at": "2026-10-29T08:09:47.862008Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-05-07T10:58:00Z",
+    "group_key": "label:BENIGN|ip:192.168.10.15#003",
+    "hosts": [],
+    "incident_id": "inc-430a6d0e89ca86a6",
+    "ips": [
+     "192.168.10.15",
+     "62.161.94.230"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-05-07T10:58:00Z",
+    "opened_at": "2026-10-29T08:09:47.850655Z",
+    "severity": "informational",
+    "severity_score": 0.9999656989696553,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.15",
+    "updated_at": "2026-10-29T08:09:47.860785Z",
+    "users": []
+   },
+   {
+    "alert_count": 2,
+    "archetype": null,
+    "first_event_at": "2017-03-07T09:52:05Z",
+    "group_key": "label:BENIGN|ip:192.168.10.9#002",
+    "hosts": [],
+    "incident_id": "inc-cb46e5b2134ce974",
+    "ips": [
+     "192.168.10.9",
+     "198.54.12.145",
+     "52.84.40.204"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-03-07T10:00:16Z",
+    "opened_at": "2026-10-29T08:09:47.850633Z",
+    "severity": "informational",
+    "severity_score": 2.2727160708824314,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.9",
+    "updated_at": "2026-10-29T08:09:47.865752Z",
+    "users": []
+   },
+   {
+    "alert_count": 1,
+    "archetype": null,
+    "first_event_at": "2017-03-07T15:18:06Z",
+    "group_key": "label:BENIGN|ip:192.168.10.5#002",
+    "hosts": [],
+    "incident_id": "inc-ed87703b6a3f04c0",
+    "ips": [
+     "192.168.10.5",
+     "192.229.163.213"
+    ],
+    "is_simulated": true,
+    "label_sources": [
+     "ml_model"
+    ],
+    "last_event_at": "2017-03-07T15:18:06Z",
+    "opened_at": "2026-10-29T08:09:47.850603Z",
+    "severity": "informational",
+    "severity_score": 0.9999435320026715,
+    "sources": [
+     "flow_ml"
+    ],
+    "status": "open",
+    "title": "BENIGN flows on 192.168.10.5",
+    "updated_at": "2026-10-29T08:09:47.863977Z",
+    "users": []
+   }
+  ],
+  "limit": 50,
+  "offset": 0,
+  "rows_backend": "memory",
+  "severity_from": "the incident row, which the correlation pass wrote only after re-deriving it from the alerts it holds; GET /incidents/{id} re-derives it again on read"
+ },
+ "status": 200
+}
